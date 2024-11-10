@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -54,13 +54,54 @@ function RoutingControl({ start, end }: { start: L.LatLng; end: L.LatLng }) {
   return null;
 }
 
+// Add this helper function at the top level
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+}
+
+// Add this helper function for precise coordinate formatting
+function formatCoordinate(coord: number): number {
+  return Number(coord.toFixed(14)); // Keep 14 decimal places for high precision
+}
+
 export default function Map() {
   const { businesses } = useBusinessStore();
-  const center = { lat: 14.458942866502959, lng: 120.96075553643246 };
+  // Format center coordinates with high precision
+  const center = { 
+    lat: 14.458942866502959, 
+    lng: 120.96075553643246 
+  };
   const [selectedBusiness, setSelectedBusiness] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
+
+  // Calculate distances but don't filter by radius
+  const businessesWithDistance = useMemo(() => {
+    return businesses
+      .map(business => ({
+        ...business,
+        coordinates: {
+          lat: formatCoordinate(business.coordinates.lat),
+          lng: formatCoordinate(business.coordinates.lng)
+        },
+        distance: calculateDistance(
+          center.lat,
+          center.lng,
+          business.coordinates.lat,
+          business.coordinates.lng
+        )
+      }))
+      .sort((a, b) => a.distance - b.distance);
+  }, [businesses, center]);
 
   useEffect(() => {
     const resizeMap = () => {
@@ -72,7 +113,7 @@ export default function Map() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="p-4 bg-white shadow-sm">
-        <h1 className="text-xl font-semibold">Nearby Places</h1>
+        <h1 className="text-xl font-semibold">All Places</h1>
         {selectedBusiness && (
           <button
             onClick={() => setSelectedBusiness(null)}
@@ -101,7 +142,13 @@ export default function Map() {
           />
           
           {/* University Marker */}
-          <Marker position={[center.lat, center.lng]} icon={universityIcon}>
+          <Marker 
+            position={[
+              formatCoordinate(center.lat), 
+              formatCoordinate(center.lng)
+            ]} 
+            icon={universityIcon}
+          >
             <Popup>
               <div className="text-center">
                 <h3 className="font-semibold">St. Dominic College of Asia</h3>
@@ -111,16 +158,20 @@ export default function Map() {
           </Marker>
 
           {/* Business Markers */}
-          {businesses.map((business) => (
+          {businessesWithDistance.map((business) => (
             <Marker
               key={business.id}
-              position={[business.coordinates.lat, business.coordinates.lng]}
+              position={[
+                formatCoordinate(business.coordinates.lat),
+                formatCoordinate(business.coordinates.lng)
+              ]}
               icon={businessIcon}
             >
               <Popup>
                 <div className="text-center">
                   <h3 className="font-semibold">{business.name}</h3>
                   <p className="text-sm text-gray-600">{business.category}</p>
+                  <p className="text-sm text-gray-600">{business.distance.toFixed(2)} km away</p>
                   <div className="mt-2">
                     <div className="text-yellow-400">
                       {'★'.repeat(Math.floor(business.rating))}

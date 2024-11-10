@@ -16,7 +16,7 @@ export interface Business {
   category: string;
   rating: number;
   reviewCount: number;
-  photos?: string[];
+  photos: string[];
   coordinates: {
     lat: number;
     lng: number;

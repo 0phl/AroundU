@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
+import 'leaflet/dist/leaflet.css';
 
 function App() {
   return (

@@ -13,10 +13,17 @@ export default function BusinessManagement() {
     if (editingBusiness) {
       updateBusiness(editingBusiness.id, businessData);
     } else {
-      addBusiness({
+      const newBusiness: Business = {
         ...businessData,
-        id: Math.random().toString(36).substr(2, 9)
-      } as Business);
+        id: Math.random().toString(36).substr(2, 9),
+        rating: 0,
+        reviewCount: 0,
+        discounts: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as Business;
+      
+      addBusiness(newBusiness);
     }
     setShowForm(false);
     setEditingBusiness(null);
