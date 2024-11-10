@@ -2,33 +2,20 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_API_KEY,
-  authDomain: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_PROJECT_ID,
-  storageBucket: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: (import.meta.env as ImportMetaEnv).VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyBAwn-6PWdt9sRXxzObM4pcBlVv5whc30w",
+  authDomain: "aroundu-ef722.firebaseapp.com",
+  projectId: "aroundu-ef722",
+  storageBucket: "aroundu-ef722.firebasestorage.app",
+  messagingSenderId: "722779773873",
+  appId: "1:722779773873:web:f622798884cec41a2abb90",
+  measurementId: "G-GPWW27MN26"
 };
-
-// Initialize Firebase only if environment variables are present
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-  throw new Error('Firebase configuration is missing. Please check your environment variables.');
-}
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-
-// Add error handling for auth state changes
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    console.log('User is signed in');
-  } else {
-    console.log('User is signed out');
-  }
-}, (error) => {
-  console.error('Auth state change error:', error);
-});
+export const analytics = getAnalytics(app);
