@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBusinessStore } from '../stores/businessStore';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 export default function Businesses() {
-  const { businesses } = useBusinessStore();
+  const { businesses, loading, fetchBusinesses } = useBusinessStore();
+
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

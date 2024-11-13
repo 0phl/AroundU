@@ -78,40 +78,40 @@ export default function Analytics() {
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* User Statistics */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900">User Statistics</h3>
-          <dl className="mt-5 grid grid-cols-1 gap-5">
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Total Users</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.users.total}</dd>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">User Statistics</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Total Users</span>
+              <span className="text-sm font-medium text-gray-900">{data.users.total}</span>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Active Users</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.users.active}</dd>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Active Users</span>
+              <span className="text-sm font-medium text-gray-900">{data.users.active}</span>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">New Users This Month</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.users.newThisMonth}</dd>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">New Users This Month</span>
+              <span className="text-sm font-medium text-gray-900">{data.users.newThisMonth}</span>
             </div>
-          </dl>
+          </div>
         </div>
 
         {/* Business Statistics */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900">Business Statistics</h3>
-          <dl className="mt-5 grid grid-cols-1 gap-5">
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Total Businesses</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.businesses.total}</dd>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Business Statistics</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Total Businesses</span>
+              <span className="text-sm font-medium text-gray-900">{data.businesses.total}</span>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Active Businesses</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.businesses.active}</dd>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Active Businesses</span>
+              <span className="text-sm font-medium text-gray-900">{data.businesses.active}</span>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm font-medium text-gray-500">Average Rating</dt>
-              <dd className="text-sm font-medium text-gray-900">{data.businesses.averageRating}</dd>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Average Rating</span>
+              <span className="text-sm font-medium text-gray-900">{data.businesses.averageRating}</span>
             </div>
-          </dl>
+          </div>
         </div>
 
         {/* Discount Statistics */}

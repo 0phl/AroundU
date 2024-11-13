@@ -17,7 +17,7 @@ export default function BusinessDetails() {
     discount => 
       discount.businessId === id && 
       discount.status === 'active' && 
-      new Date(discount.validUntil) > new Date()
+      new Date(discount.expiryDate) > new Date()
   );
 
   if (!business) {

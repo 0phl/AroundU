@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBusinessStore } from '../stores/businessStore';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -16,8 +16,12 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 export default function Home() {
-  const { businesses } = useBusinessStore();
+  const { businesses, loading, fetchBusinesses } = useBusinessStore();
   const center = { lat: 14.458942866502959, lng: 120.96075553643246 }; // SDCA coordinates
+
+  useEffect(() => {
+    fetchBusinesses();
+  }, [fetchBusinesses]);
 
   const nearbyBusinesses = businesses
     .map(business => ({
@@ -32,6 +36,15 @@ export default function Home() {
     .filter(business => business.distance <= 2) // Show businesses within 2km
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 4); // Show only top 4 nearest businesses
+
+  // Add loading state handling
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

@@ -1,6 +1,7 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Layout from './components/Layout';
+import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Map from './pages/Map';
@@ -21,7 +22,7 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="map" element={<Map />} />
           <Route path="top-rated" element={<TopRated />} />
@@ -40,15 +41,16 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="admin/*"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
         </Route>
+
+        <Route
+          path="admin/*"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

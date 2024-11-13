@@ -1,88 +1,134 @@
 import { create } from 'zustand';
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  getDocs,
+  query,
+  orderBy,
+  Timestamp,
+  where
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import type { Discount } from '../types';
-import { useBusinessStore } from './businessStore';
 
 interface DiscountStore {
   discounts: Discount[];
-  addDiscount: (discount: Discount) => void;
-  updateDiscount: (id: string, discount: Partial<Discount>) => void;
-  deleteDiscount: (id: string) => void;
+  loading: boolean;
+  fetchDiscounts: () => Promise<void>;
+  addDiscount: (discount: Omit<Discount, 'id'>) => Promise<void>;
+  updateDiscount: (id: string, discount: Partial<Discount>) => Promise<void>;
+  deleteDiscount: (id: string) => Promise<void>;
 }
 
-export const useDiscountStore = create<DiscountStore>((set) => ({
-  discounts: [
-    {
-      id: '1',
-      businessId: '1',
-      title: 'Student Night Special',
-      description: '20% off on all items',
-      code: 'STUDENT20',
-      percentage: 20,
-      validFrom: new Date(),
-      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      terms: 'Valid student ID required. Cannot be combined with other offers.',
-      status: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ],
-  addDiscount: (discount) => {
-    // Update the business's discounts array
-    const businessStore = useBusinessStore.getState();
-    const business = businessStore.businesses.find(b => b.id === discount.businessId);
-    if (business) {
-      businessStore.updateBusiness(business.id, {
-        discounts: [...business.discounts, discount]
+export const useDiscountStore = create<DiscountStore>((set, get) => ({
+  discounts: [],
+  loading: false,
+
+  fetchDiscounts: async () => {
+    set({ loading: true });
+    try {
+      const discountsRef = collection(db, 'discounts');
+      const q = query(discountsRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      
+      const discounts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          expiryDate: data.expiryDate?.toDate() || new Date(),
+        } as Discount;
       });
+
+      set({ discounts });
+    } catch (error) {
+      console.error('Error fetching discounts:', error);
+    } finally {
+      set({ loading: false });
     }
-
-    set((state) => ({
-      discounts: [...state.discounts, discount]
-    }));
   },
-  updateDiscount: (id, updatedDiscount) => {
-    set((state) => {
-      const discount = state.discounts.find(d => d.id === id);
-      if (!discount) return state;
 
-      // Update the business's discounts array
-      const businessStore = useBusinessStore.getState();
-      const business = businessStore.businesses.find(b => b.id === discount.businessId);
-      if (business) {
-        const updatedBusinessDiscounts = business.discounts.map(d =>
-          d.id === id ? { ...d, ...updatedDiscount } : d
-        );
-        businessStore.updateBusiness(business.id, {
-          discounts: updatedBusinessDiscounts
-        });
-      }
+  addDiscount: async (discountData) => {
+    try {
+      const discountsRef = collection(db, 'discounts');
+      const newDiscount = {
+        ...discountData,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        expiryDate: Timestamp.fromDate(new Date(discountData.expiryDate)),
+        status: 'active'
+      };
 
-      return {
-        discounts: state.discounts.map((discount) =>
+      const docRef = await addDoc(discountsRef, newDiscount);
+      
+      const discount = {
+        ...newDiscount,
+        id: docRef.id,
+        createdAt: newDiscount.createdAt.toDate(),
+        updatedAt: newDiscount.updatedAt.toDate(),
+        expiryDate: newDiscount.expiryDate.toDate(),
+      } as Discount;
+
+      set(state => ({
+        discounts: [discount, ...state.discounts]
+      }));
+
+      await get().fetchDiscounts();
+    } catch (error) {
+      console.error('Error adding discount:', error);
+      throw error;
+    }
+  },
+
+  updateDiscount: async (id, updatedData) => {
+    try {
+      const discountRef = doc(db, 'discounts', id);
+      const updateData = {
+        ...updatedData,
+        updatedAt: Timestamp.now(),
+        ...(updatedData.expiryDate && {
+          expiryDate: Timestamp.fromDate(new Date(updatedData.expiryDate))
+        })
+      };
+      
+      await updateDoc(discountRef, updateData);
+
+      set(state => ({
+        discounts: state.discounts.map(discount =>
           discount.id === id
-            ? { ...discount, ...updatedDiscount, updatedAt: new Date() }
+            ? { 
+                ...discount, 
+                ...updatedData, 
+                updatedAt: new Date(),
+                ...(updatedData.expiryDate && {
+                  expiryDate: new Date(updatedData.expiryDate)
+                })
+              }
             : discount
         )
-      };
-    });
+      }));
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      throw error;
+    }
   },
-  deleteDiscount: (id) => {
-    set((state) => {
-      const discount = state.discounts.find(d => d.id === id);
-      if (discount) {
-        // Remove the discount from the business's discounts array
-        const businessStore = useBusinessStore.getState();
-        const business = businessStore.businesses.find(b => b.id === discount.businessId);
-        if (business) {
-          businessStore.updateBusiness(business.id, {
-            discounts: business.discounts.filter(d => d.id !== id)
-          });
-        }
-      }
 
-      return {
-        discounts: state.discounts.filter((discount) => discount.id !== id)
-      };
-    });
-  }
+  deleteDiscount: async (id) => {
+    try {
+      const discountRef = doc(db, 'discounts', id);
+      await deleteDoc(discountRef);
+
+      set(state => ({
+        discounts: state.discounts.filter(discount => discount.id !== id)
+      }));
+    } catch (error) {
+      console.error('Error deleting discount:', error);
+      throw error;
+    }
+  },
 }));

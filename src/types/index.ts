@@ -48,15 +48,14 @@ export interface Review {
 
 export interface Discount {
   id: string;
-  businessId: string;
   title: string;
   description: string;
-  code: string;
-  percentage: number;
-  validFrom: Date;
-  validUntil: Date;
+  businessId: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  expiryDate: Date;
   terms: string;
-  status: 'active' | 'expired' | 'draft';
+  status: 'active' | 'inactive';
   createdAt: Date;
   updatedAt: Date;
 }

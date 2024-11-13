@@ -1,50 +1,38 @@
-import React, { useState } from 'react';
-import type { Discount } from '../../types';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { useBusinessStore } from '../../stores/businessStore';
+import type { Discount } from '../../types';
 
 interface DiscountFormProps {
-  onSubmit: (discount: Partial<Discount>) => void;
-  initialData?: Partial<Discount>;
+  onSubmit: (data: Partial<Discount>) => void;
   onCancel: () => void;
+  initialData?: Discount;
 }
 
-export default function DiscountForm({ onSubmit, initialData, onCancel }: DiscountFormProps) {
+export default function DiscountForm({ onSubmit, onCancel, initialData }: DiscountFormProps) {
   const { businesses } = useBusinessStore();
-  const [formData, setFormData] = useState({
-    businessId: initialData?.businessId || '',
-    title: initialData?.title || '',
-    description: initialData?.description || '',
-    code: initialData?.code || '',
-    percentage: initialData?.percentage || 0,
-    validFrom: initialData?.validFrom ? new Date(initialData.validFrom).toISOString().slice(0, 16) : '',
-    validUntil: initialData?.validUntil ? new Date(initialData.validUntil).toISOString().slice(0, 16) : '',
-    terms: initialData?.terms || '',
-    status: initialData?.status || 'draft'
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: initialData || {
+      title: '',
+      description: '',
+      businessId: '',
+      discountType: 'percentage',
+      discountValue: '',
+      expiryDate: '',
+      terms: '',
+      status: 'active'
+    }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      ...formData,
-      validFrom: new Date(formData.validFrom),
-      validUntil: new Date(formData.validUntil),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <label htmlFor="businessId" className="block text-sm font-medium text-gray-700">
-          Business
+          Select Business
         </label>
         <select
-          id="businessId"
-          value={formData.businessId}
-          onChange={(e) => setFormData({ ...formData, businessId: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          required
+          {...register('businessId', { required: 'Business is required' })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
           <option value="">Select a business</option>
           {businesses.map((business) => (
@@ -53,20 +41,23 @@ export default function DiscountForm({ onSubmit, initialData, onCancel }: Discou
             </option>
           ))}
         </select>
+        {errors.businessId && (
+          <p className="mt-1 text-sm text-red-600">{errors.businessId.message}</p>
+        )}
       </div>
 
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Discount Title
+          Title
         </label>
         <input
           type="text"
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          required
+          {...register('title', { required: 'Title is required' })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
+        {errors.title && (
+          <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+        )}
       </div>
 
       <div>
@@ -74,75 +65,53 @@ export default function DiscountForm({ onSubmit, initialData, onCancel }: Discou
           Description
         </label>
         <textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          {...register('description', { required: 'Description is required' })}
           rows={3}
-          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
+        {errors.description && (
+          <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="code" className="block text-sm font-medium text-gray-700">
-            Discount Code
+          <label htmlFor="discountType" className="block text-sm font-medium text-gray-700">
+            Discount Type
           </label>
-          <input
-            type="text"
-            id="code"
-            value={formData.code}
-            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            required
-          />
+          <select
+            {...register('discountType', { required: 'Discount type is required' })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="percentage">Percentage</option>
+            <option value="fixed">Fixed Amount</option>
+          </select>
         </div>
 
         <div>
-          <label htmlFor="percentage" className="block text-sm font-medium text-gray-700">
-            Discount Percentage
+          <label htmlFor="discountValue" className="block text-sm font-medium text-gray-700">
+            Discount Value
           </label>
           <input
             type="number"
-            id="percentage"
-            value={formData.percentage}
-            onChange={(e) => setFormData({ ...formData, percentage: parseInt(e.target.value) })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            min="0"
-            max="100"
-            required
+            {...register('discountValue', { 
+              required: 'Discount value is required',
+              min: { value: 0, message: 'Value must be positive' }
+            })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="validFrom" className="block text-sm font-medium text-gray-700">
-            Valid From
-          </label>
-          <input
-            type="datetime-local"
-            id="validFrom"
-            value={formData.validFrom}
-            onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="validUntil" className="block text-sm font-medium text-gray-700">
-            Valid Until
-          </label>
-          <input
-            type="datetime-local"
-            id="validUntil"
-            value={formData.validUntil}
-            onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            required
-          />
-        </div>
+      <div>
+        <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
+          Expiry Date
+        </label>
+        <input
+          type="datetime-local"
+          {...register('expiryDate', { required: 'Expiry date is required' })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
       </div>
 
       <div>
@@ -150,12 +119,9 @@ export default function DiscountForm({ onSubmit, initialData, onCancel }: Discou
           Terms and Conditions
         </label>
         <textarea
-          id="terms"
-          value={formData.terms}
-          onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          {...register('terms', { required: 'Terms are required' })}
           rows={3}
-          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
       </div>
 
@@ -164,18 +130,15 @@ export default function DiscountForm({ onSubmit, initialData, onCancel }: Discou
           Status
         </label>
         <select
-          id="status"
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value as Discount['status'] })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          {...register('status', { required: 'Status is required' })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
-          <option value="draft">Draft</option>
           <option value="active">Active</option>
-          <option value="expired">Expired</option>
+          <option value="inactive">Inactive</option>
         </select>
       </div>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-end space-x-3">
         <button
           type="button"
           onClick={onCancel}
