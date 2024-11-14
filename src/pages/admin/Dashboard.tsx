@@ -18,6 +18,7 @@ import AlertManagement from './AlertManagement';
 import Analytics from './Analytics';
 import { useAuth } from '../../hooks/useAuth';
 import { Menu, Transition } from '@headlessui/react';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 const adminNavigation = [
   { name: 'Businesses', href: '/admin/businesses', icon: BuildingStorefrontIcon },
@@ -205,7 +206,11 @@ export default function AdminDashboard() {
               <Route path="/" element={<Navigate to="/admin/businesses" replace />} />
               <Route path="businesses/*" element={<BusinessManagement />} />
               <Route path="events/*" element={<EventManagement />} />
-              <Route path="discounts/*" element={<DiscountManagement />} />
+              <Route path="discounts/*" element={
+                <ErrorBoundary>
+                  <DiscountManagement />
+                </ErrorBoundary>
+              } />
               <Route path="users/*" element={<UserManagement />} />
               <Route path="alerts/*" element={<AlertManagement />} />
               <Route path="analytics" element={<Analytics />} />

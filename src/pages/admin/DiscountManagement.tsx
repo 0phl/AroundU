@@ -9,27 +9,106 @@ import { format } from 'date-fns';
 export default function DiscountManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
-  const { discounts, addDiscount, updateDiscount, deleteDiscount, fetchDiscounts } = useDiscountStore();
-  const { businesses } = useBusinessStore();
+  const [error, setError] = useState<string | null>(null);
+  const { discounts, loading, fetchDiscounts, addDiscount, updateDiscount, deleteDiscount } = useDiscountStore();
+  const { businesses, fetchBusinesses } = useBusinessStore();
 
   useEffect(() => {
-    fetchDiscounts();
-  }, [fetchDiscounts]);
+    console.log('DiscountManagement mounted');
+    let mounted = true;
 
-  const handleSubmit = async (discountData: Partial<Discount>) => {
+    const loadData = async () => {
+      try {
+        console.log('Starting data load');
+        setError(null);
+        
+        // Load businesses first
+        console.log('Fetching businesses...');
+        await fetchBusinesses();
+        
+        if (!mounted) return;
+        
+        // Then load discounts
+        console.log('Fetching discounts...');
+        await fetchDiscounts();
+        
+        if (!mounted) return;
+        
+        console.log('Data load complete');
+      } catch (error) {
+        console.error('Error in loadData:', error);
+        if (mounted) {
+          setError(error instanceof Error ? error.message : 'Failed to load data');
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [fetchDiscounts, fetchBusinesses]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading discounts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">⚠️ Error</div>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering with discounts:', discounts);
+  console.log('Loading state:', loading);
+
+  const getBusinessName = (businessId: string) => {
+    const business = businesses.find(b => b.id === businessId);
+    return business?.name || 'Unknown Business';
+  };
+
+  const handleSubmit = async (formData: Omit<Discount, 'id'>) => {
     try {
+      // Add logging to check the discount data
+      console.log('Submitting discount:', formData);
+      
+      // Ensure the status is set to 'active' by default if not specified
+      const discountData = {
+        ...formData,
+        status: formData.status || 'active',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
       if (editingDiscount) {
         await updateDiscount(editingDiscount.id, discountData);
       } else {
-        await addDiscount(discountData as Omit<Discount, 'id'>);
+        await addDiscount(discountData);
       }
+      
       setShowForm(false);
       setEditingDiscount(null);
-      // Refresh the discounts after adding/updating
-      fetchDiscounts();
     } catch (error) {
-      console.error('Error handling discount:', error);
-      alert('There was an error saving the discount. Please try again.');
+      console.error('Error saving discount:', error);
     }
   };
 
@@ -49,11 +128,6 @@ export default function DiscountManagement() {
         alert('There was an error deleting the discount. Please try again.');
       }
     }
-  };
-
-  const getBusinessName = (businessId: string) => {
-    const business = businesses.find(b => b.id === businessId);
-    return business?.name || 'Unknown Business';
   };
 
   if (showForm) {
@@ -98,42 +172,48 @@ export default function DiscountManagement() {
 
       {/* Mobile View */}
       <div className="mt-8 md:hidden">
-        {discounts.map((discount) => (
-          <div key={discount.id} className="bg-white rounded-lg shadow p-4 mb-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-gray-900">{discount.title}</h3>
-              <p className="text-sm text-gray-600">{getBusinessName(discount.businessId)}</p>
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-gray-500">{discount.description}</p>
-                <div className="flex items-center">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {discount.discountType}
-                  </span>
-                  <span className="ml-2 text-sm text-gray-500">
-                    {discount.discountValue}%
-                  </span>
+        {discounts.length === 0 ? (
+          <div className="text-center py-4 text-gray-500">No discounts found</div>
+        ) : (
+          <div className="space-y-4">
+            {discounts.map((discount) => (
+              <div key={discount.id} className="bg-white rounded-lg shadow p-4">
+                <div className="flex flex-col">
+                  <h3 className="text-base font-semibold text-gray-900">{discount.title}</h3>
+                  <p className="text-sm text-gray-600">{getBusinessName(discount.businessId)}</p>
+                  <div className="mt-2 space-y-2">
+                    <p className="text-sm text-gray-500">{discount.description}</p>
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-500">
+                        {discount.discountType}
+                      </span>
+                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {discount.discountValue}%
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Valid until: {format(new Date(discount.expiryDate), 'PP')}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Valid until: {format(new Date(discount.expiryDate), 'PP')}
-                </p>
+                <div className="mt-4 flex justify-end space-x-3">
+                  <button
+                    onClick={() => handleEdit(discount)}
+                    className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(discount.id)}
+                    className="text-red-600 hover:text-red-900 text-sm font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="mt-4 flex justify-end space-x-3">
-              <button
-                onClick={() => handleEdit(discount)}
-                className="text-blue-600 hover:text-blue-900 text-sm font-medium"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(discount.id)}
-                className="text-red-600 hover:text-red-900 text-sm font-medium"
-              >
-                Delete
-              </button>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Desktop View */}
@@ -154,42 +234,50 @@ export default function DiscountManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {discounts.map((discount) => (
-                <tr key={discount.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                    {discount.title}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {getBusinessName(discount.businessId)}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {discount.discountType}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {discount.discountValue}%
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {discount.status}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {format(new Date(discount.expiryDate), 'PP')}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                    <button
-                      onClick={() => handleEdit(discount)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(discount.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+              {discounts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-4 text-center text-gray-500">
+                    No discounts found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                discounts.map((discount) => (
+                  <tr key={discount.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
+                      {discount.title}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {getBusinessName(discount.businessId)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {discount.discountType}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {discount.discountValue}%
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {discount.status}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {format(new Date(discount.expiryDate), 'PP')}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(discount)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(discount.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -60,12 +60,14 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
   fetchBusinesses: async () => {
     set({ loading: true });
     try {
+      console.log('Fetching businesses...');
       const businessesRef = collection(db, 'businesses');
       const q = query(businessesRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       
       const businesses = querySnapshot.docs.map(doc => {
         const data = doc.data() as FirestoreBusiness;
+        console.log('Business data:', doc.id, data);
         return {
           id: doc.id,
           ...data,
@@ -74,11 +76,12 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
         } as Business;
       });
 
-      set({ businesses });
+      console.log('Processed businesses:', businesses);
+      set({ businesses, loading: false });
     } catch (error) {
       console.error('Error fetching businesses:', error);
-    } finally {
       set({ loading: false });
+      throw error;
     }
   },
 

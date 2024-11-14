@@ -22,4 +22,18 @@ export interface Business {
     lng: number;
   };
   // Add other business fields as needed
+}
+
+export interface Discount {
+  id: string;
+  title: string;
+  description: string;
+  businessId: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  status: 'active' | 'inactive' | 'expired';
+  expiryDate: Date | string;
+  terms?: string;
+  createdAt: Date;
+  updatedAt: Date;
 } 

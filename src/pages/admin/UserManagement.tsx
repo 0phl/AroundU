@@ -74,7 +74,44 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {/* ... existing table rows ... */}
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center text-gray-500">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
+                      {user.email}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {user.role}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {user.studentId || '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {format(new Date(user.createdAt), 'PP')}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleRoleUpdate(user)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Change Role
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
