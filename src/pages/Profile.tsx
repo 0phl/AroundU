@@ -9,11 +9,17 @@ export default function Profile() {
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-6 py-4">
           <h1 className="text-3xl font-semibold text-gray-900">Profile</h1>
-          <div className="mt-4">
-            <p className="text-gray-600">Email: {user?.email}</p>
-            <p className="text-gray-600">Name: {user?.displayName}</p>
+          <div className="mt-4 space-y-2">
+            <p className="text-gray-600">
+              <span className="font-medium">Name:</span> {user?.firstName} {user?.lastName}
+            </p>
+            <p className="text-gray-600">
+              <span className="font-medium">Email:</span> {user?.email}
+            </p>
             {user?.studentId && (
-              <p className="text-gray-600">Student ID: {user.studentId}</p>
+              <p className="text-gray-600">
+                <span className="font-medium">Student ID:</span> {user.studentId}
+              </p>
             )}
           </div>
         </div>

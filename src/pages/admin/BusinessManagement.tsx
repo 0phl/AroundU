@@ -3,6 +3,8 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { useBusinessStore } from '../../stores/businessStore';
 import BusinessForm from '../../components/admin/BusinessForm';
 import type { Business } from '../../types';
+import { generateSearchTerms } from '../../utils/searchUtils';
+import { toast } from 'react-hot-toast';
 
 export default function BusinessManagement() {
   const [showForm, setShowForm] = useState(false);
@@ -15,16 +17,31 @@ export default function BusinessManagement() {
 
   const handleSubmit = async (businessData: Partial<Business>) => {
     try {
+      const searchTerms = generateSearchTerms({
+        name: businessData.name!,
+        category: businessData.category!,
+        description: businessData.description
+      });
+
+      const businessWithSearchTerms = {
+        ...businessData,
+        searchTerms,
+        updatedAt: new Date()
+      };
+
       if (editingBusiness) {
-        await updateBusiness(editingBusiness.id, businessData);
+        await updateBusiness(editingBusiness.id, businessWithSearchTerms);
       } else {
-        await addBusiness(businessData as Omit<Business, 'id'>);
+        await addBusiness({
+          ...businessWithSearchTerms,
+          createdAt: new Date()
+        } as Omit<Business, 'id'>);
       }
       setShowForm(false);
       setEditingBusiness(null);
     } catch (error) {
       console.error('Error saving business:', error);
-      alert('Error saving business. Please try again.');
+      toast.error('Error saving business. Please try again.');
     }
   };
 

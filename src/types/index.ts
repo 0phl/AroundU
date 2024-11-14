@@ -34,6 +34,7 @@ export interface Business {
   discounts: Discount[];
   createdAt: Date;
   updatedAt: Date;
+  searchTerms?: string[];
 }
 
 export interface Review {

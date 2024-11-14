@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [studentId, setStudentId] = useState('');
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(email, password);
+      await signUp(email, password, firstName, lastName, studentId);
       navigate('/');
     } catch (error) {
     }
@@ -54,6 +56,34 @@ export default function Register() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                First Name
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                Last Name
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
               />
             </div>

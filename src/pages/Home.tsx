@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useBusinessStore } from '../stores/businessStore';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { useState, useMemo } from 'react';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
@@ -17,32 +19,61 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export default function Home() {
   const { businesses } = useBusinessStore();
+  const [searchQuery, setSearchQuery] = useState('');
   const center = { lat: 14.458942866502959, lng: 120.96075553643246 }; // SDCA coordinates
 
-  const nearbyBusinesses = businesses
-    .map(business => ({
-      ...business,
-      distance: calculateDistance(
-        center.lat,
-        center.lng,
-        business.coordinates.lat,
-        business.coordinates.lng
-      )
-    }))
-    .filter(business => business.distance <= 2) // Show businesses within 2km
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, 4); // Show only top 4 nearest businesses
+  // Filter businesses based on search query and distance
+  const nearbyBusinesses = useMemo(() => {
+    return businesses
+      .map(business => ({
+        ...business,
+        distance: calculateDistance(
+          center.lat,
+          center.lng,
+          business.coordinates.lat,
+          business.coordinates.lng
+        )
+      }))
+      .filter(business => {
+        // First filter by distance
+        const isNearby = business.distance <= 2;
+        
+        // Then filter by search query if one exists
+        if (!searchQuery) return isNearby;
+        
+        const query = searchQuery.toLowerCase();
+        return isNearby && (
+          business.name.toLowerCase().includes(query) ||
+          business.category.toLowerCase().includes(query) ||
+          business.description?.toLowerCase().includes(query) ||
+          (business.searchTerms && business.searchTerms.some(term => 
+            term.toLowerCase().includes(query)
+          ))
+        );
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 4); // Show only top 4 nearest businesses
+  }, [businesses, searchQuery, center]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {/* Search Bar */}
       <div className="px-4 py-3 bg-blue-600">
         <div className="relative max-w-2xl mx-auto">
-          <input
-            type="text"
-            placeholder="Search for cafes, shops, services..."
-            className="w-full px-4 py-2 rounded-full border-none focus:ring-2 focus:ring-blue-300 focus:outline-none"
-          />
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearch}
+              placeholder="Search for cafes, shops, services..."
+              className="w-full pl-10 pr-4 py-2 rounded-full border-none focus:ring-2 focus:ring-blue-300 focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 

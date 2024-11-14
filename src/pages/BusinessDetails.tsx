@@ -6,6 +6,25 @@ import { useDiscountStore } from '../stores/discountStore';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 
+// Add this constant
+const DAYS_OF_WEEK = [
+  'monday',
+  'tuesday', 
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday'
+] as const;
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
 export default function BusinessDetails() {
   const { id } = useParams();
   const { businesses, loading: businessLoading, fetchBusinesses } = useBusinessStore();
@@ -122,13 +141,22 @@ export default function BusinessDetails() {
             {business?.hours && (
               <div>
                 <h3 className="text-base font-medium text-gray-900">Business Hours</h3>
-                <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(business.hours).map(([day, hours]) => (
-                    <div key={day} className="flex justify-between">
-                      <span className="capitalize text-gray-600">{day}</span>
-                      <span className="text-gray-900">{hours.open} - {hours.close}</span>
-                    </div>
-                  ))}
+                <div className="mt-1 space-y-1">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const hours = business.hours[day];
+                    return (
+                      <div key={day} className="flex justify-between text-sm">
+                        <span className="capitalize text-gray-600 w-24">{day}</span>
+                        <span className="text-gray-900">
+                          {hours.isClosed ? (
+                            'Closed'
+                          ) : (
+                            `${formatTime(hours.open)} - ${formatTime(hours.close)}`
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

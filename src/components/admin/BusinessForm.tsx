@@ -9,6 +9,46 @@ interface BusinessFormProps {
   children?: React.ReactNode;
 }
 
+type BusinessHours = {
+  open: string;
+  close: string;
+  isClosed?: boolean;
+};
+
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+const DAYS_OF_WEEK: DayOfWeek[] = [
+  'monday',
+  'tuesday', 
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday'
+];
+
+const formatTimeForInput = (time12h: string) => {
+  const [time, period] = time12h.split(' ');
+  const [hours, minutes] = time.split(':');
+  let hour = parseInt(hours, 10);
+  
+  if (period === 'PM' && hour !== 12) {
+    hour += 12;
+  } else if (period === 'AM' && hour === 12) {
+    hour = 0;
+  }
+  
+  return `${hour.toString().padStart(2, '0')}:${minutes}`;
+};
+
+const formatTimeForDisplay = (time24h: string) => {
+  const [hours, minutes] = time24h.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
 export default function BusinessForm({ onSubmit, onCancel, initialData }: BusinessFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string>(initialData?.photos?.[0] || '');
@@ -23,15 +63,27 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
     website: initialData?.website || '',
     photos: initialData?.photos || [],
     hours: initialData?.hours || {
-      monday: { open: "09:00", close: "17:00" },
-      tuesday: { open: "09:00", close: "17:00" },
-      wednesday: { open: "09:00", close: "17:00" },
-      thursday: { open: "09:00", close: "17:00" },
-      friday: { open: "09:00", close: "17:00" },
-      saturday: { open: "09:00", close: "17:00" },
-      sunday: { open: "09:00", close: "17:00" }
+      monday: { open: "09:00", close: "17:00", isClosed: false },
+      tuesday: { open: "09:00", close: "17:00", isClosed: false },
+      wednesday: { open: "09:00", close: "17:00", isClosed: false },
+      thursday: { open: "09:00", close: "17:00", isClosed: false },
+      friday: { open: "09:00", close: "17:00", isClosed: false },
+      saturday: { open: "09:00", close: "17:00", isClosed: false },
+      sunday: { open: "09:00", close: "17:00", isClosed: false }
     }
   });
+
+  const [hours, setHours] = useState<Record<DayOfWeek, BusinessHours>>(
+    initialData?.hours || {
+      monday: { open: "09:00", close: "17:00", isClosed: false },
+      tuesday: { open: "09:00", close: "17:00", isClosed: false },
+      wednesday: { open: "09:00", close: "17:00", isClosed: false },
+      thursday: { open: "09:00", close: "17:00", isClosed: false },
+      friday: { open: "09:00", close: "17:00", isClosed: false },
+      saturday: { open: "09:00", close: "17:00", isClosed: false },
+      sunday: { open: "09:00", close: "17:00", isClosed: false }
+    }
+  );
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,6 +108,26 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleHoursChange = (day: DayOfWeek, type: 'open' | 'close' | 'isClosed', value: string | boolean) => {
+    setHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [type]: value
+      }
+    }));
+    setFormData(prev => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours?.[day],
+          [type]: value
+        }
+      }
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -204,6 +276,57 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
+        </div>
+      </div>
+
+      {/* Business Hours Section */}
+      <div className="mt-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Business Hours</h3>
+        <div className="grid gap-4">
+          {DAYS_OF_WEEK.map((day) => (
+            <div key={day} className="grid grid-cols-4 gap-4 items-center">
+              <label className="text-sm font-medium text-gray-700 capitalize">
+                {day}
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={hours[day].isClosed}
+                  onChange={(e) => handleHoursChange(day, 'isClosed', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2"
+                />
+                <span className="text-sm text-gray-500">Closed</span>
+              </div>
+              <div>
+                <input
+                  type="time"
+                  value={hours[day].open}
+                  onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                    hours[day].isClosed ? 'opacity-50' : ''
+                  }`}
+                  disabled={hours[day].isClosed}
+                />
+                <span className="text-xs text-gray-500 mt-1">
+                  {!hours[day].isClosed && formatTimeForDisplay(hours[day].open)}
+                </span>
+              </div>
+              <div>
+                <input
+                  type="time"
+                  value={hours[day].close}
+                  onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
+                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                    hours[day].isClosed ? 'opacity-50' : ''
+                  }`}
+                  disabled={hours[day].isClosed}
+                />
+                <span className="text-xs text-gray-500 mt-1">
+                  {!hours[day].isClosed && formatTimeForDisplay(hours[day].close)}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

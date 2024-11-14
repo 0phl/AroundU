@@ -1,6 +1,8 @@
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   displayName: string;
   role: 'admin' | 'user';
   status: 'active' | 'inactive';
@@ -21,6 +23,16 @@ export interface Business {
     lat: number;
     lng: number;
   };
+  hours: {
+    monday: { open: string; close: string; isClosed?: boolean };
+    tuesday: { open: string; close: string; isClosed?: boolean };
+    wednesday: { open: string; close: string; isClosed?: boolean };
+    thursday: { open: string; close: string; isClosed?: boolean };
+    friday: { open: string; close: string; isClosed?: boolean };
+    saturday: { open: string; close: string; isClosed?: boolean };
+    sunday: { open: string; close: string; isClosed?: boolean };
+  };
+  searchTerms: string[];
   // Add other business fields as needed
 }
 
