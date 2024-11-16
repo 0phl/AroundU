@@ -49,6 +49,7 @@ interface FirestoreBusiness {
   rating: number;
   reviewCount: number;
   discounts: string[];
+  searchTerms?: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -73,6 +74,8 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
+          searchTerms: data.searchTerms || [],
+          discounts: data.discounts || []
         } as Business;
       });
 
@@ -93,6 +96,7 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
         rating: 0,
         reviewCount: 0,
         discounts: [],
+        searchTerms: [],
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
@@ -103,6 +107,7 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
         id: docRef.id,
         createdAt: newBusiness.createdAt.toDate(),
         updatedAt: newBusiness.updatedAt.toDate(),
+        searchTerms: [],
       } as Business;
 
       set(state => ({
