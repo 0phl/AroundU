@@ -14,21 +14,17 @@ service cloud.firestore {
     // Events collection rules
     match /events/{eventId} {
       allow read: if true;  // Anyone can read events
-      // Allow admins full access and authenticated users to update attendees
       allow update: if isAdmin() || 
         (isAuthenticated() && 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees', 'updatedAt']));
-      allow create, delete: if isAdmin();  // Only admins can create/delete events
+      allow create, delete: if isAdmin();
     }
 
     // Users collection rules
     match /users/{userId} {
-      // Allow users to read their own data, and admins to read all user data
       allow read: if request.auth != null && 
                  (request.auth.uid == userId || isAdmin());
       
-      // Allow users to update their own non-role fields
-      // Allow admins to update any user's data including roles
       allow update: if request.auth != null && 
                    (
                      (request.auth.uid == userId && 
@@ -36,37 +32,35 @@ service cloud.firestore {
                      isAdmin()
                    );
       
-      // Only allow admins to delete users
       allow delete: if isAdmin();
       
-      // Allow creation of new users during sign up
       allow create: if request.auth != null && 
                    request.auth.uid == userId && 
                    request.resource.data.role == 'user';
 
-      // Allow users to manage their interested events
+      // Rules for interestedEvents subcollection
       match /interestedEvents/{eventId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
         allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
     // Businesses collection rules
     match /businesses/{businessId} {
-      allow read: if true; // Anyone can read business data
-      allow write: if isAdmin(); // Only admins can modify business data
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Discounts collection rules
     match /discounts/{discountId} {
-      allow read: if true; // Anyone can read discounts
-      allow write: if isAdmin(); // Only admins can modify discounts
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Alerts collection rules
     match /alerts/{alertId} {
-      allow read: if true; // Anyone can read alerts
-      allow write: if isAdmin(); // Only admins can modify alerts
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
