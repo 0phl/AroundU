@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import type { Event } from '../../stores/eventStore';
-import { useBusinessStore } from '../../stores/businessStore';
+import type { Event, Business } from '../../types';
 
 interface EventFormProps {
   onSubmit: (event: Partial<Event>) => void;
   initialData?: Partial<Event>;
   onCancel: () => void;
+  businesses: Business[];
 }
 
-export default function EventForm({ onSubmit, initialData, onCancel }: EventFormProps) {
-  const { businesses } = useBusinessStore();
+export default function EventForm({ onSubmit, initialData, onCancel, businesses }: EventFormProps) {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     date: initialData?.date ? new Date(initialData.date).toISOString().slice(0, 16) : '',
@@ -23,10 +22,8 @@ export default function EventForm({ onSubmit, initialData, onCancel }: EventForm
     e.preventDefault();
     onSubmit({
       ...formData,
-      date: new Date(formData.date).toISOString(),
-      attendees: initialData?.attendees || 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      date: new Date(formData.date),
+      attendees: initialData?.attendees || 0
     });
   };
 

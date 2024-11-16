@@ -74,6 +74,19 @@ export interface Alert {
   expiresAt?: Date;
 }
 
+export interface Event {
+  id: string;
+  title: string;
+  date: Date;
+  location: string;
+  description: string;
+  category: string;
+  businessId?: string;
+  attendees: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Analytics {
   users: {
     total: number;

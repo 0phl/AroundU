@@ -1,26 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useEventStore } from '../../stores/eventStore';
-import EventForm from '../../components/admin/EventForm';
+import { useBusinessStore } from '../../stores/businessStore';
 import { format } from 'date-fns';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import EventForm from '../../components/admin/EventForm';
 import type { Event } from '../../types';
 
 export default function EventManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const { events, addEvent, updateEvent, deleteEvent } = useEventStore();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { events, loading, error, fetchEvents, addEvent, updateEvent, deleteEvent } = useEventStore();
+  const { businesses, loading: businessesLoading, fetchBusinesses } = useBusinessStore();
 
-  const handleSubmit = (eventData: Partial<Event>) => {
-    if (editingEvent) {
-      updateEvent(editingEvent.id, eventData);
-    } else {
-      addEvent({
-        ...eventData,
-        id: Math.random().toString(36).substr(2, 9)
-      } as Event);
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login');
+      return;
     }
-    setShowForm(false);
-    setEditingEvent(null);
+
+    if (user?.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+
+    fetchEvents();
+    fetchBusinesses();
+  }, [user, authLoading, navigate, fetchEvents, fetchBusinesses]);
+
+  const handleSubmit = async (eventData: Partial<Event>) => {
+    try {
+      if (editingEvent) {
+        await updateEvent(editingEvent.id, eventData);
+        toast.success('Event updated successfully');
+      } else {
+        await addEvent({
+          ...eventData,
+          attendees: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as Omit<Event, 'id'>);
+        toast.success('Event created successfully');
+      }
+      setShowForm(false);
+      setEditingEvent(null);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      toast.error('Failed to save event');
+    }
   };
 
   const handleEdit = (event: Event) => {
@@ -28,11 +59,34 @@ export default function EventManagement() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this event?')) {
-      deleteEvent(id);
+      try {
+        await deleteEvent(id);
+        toast.success('Event deleted successfully');
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        toast.error('Failed to delete event');
+      }
     }
   };
+
+  const getBusinessName = (businessId: string) => {
+    const business = businesses.find(b => b.id === businessId);
+    return business?.name || 'Unknown Business';
+  };
+
+  if (loading || authLoading || businessesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
+  }
 
   if (showForm) {
     return (
@@ -44,6 +98,7 @@ export default function EventManagement() {
           <EventForm
             onSubmit={handleSubmit}
             initialData={editingEvent || undefined}
+            businesses={businesses}
             onCancel={() => {
               setShowForm(false);
               setEditingEvent(null);
@@ -93,6 +148,9 @@ export default function EventManagement() {
                       Category: {event.category}
                     </p>
                     <p className="text-sm text-gray-500">
+                      Business: {getBusinessName(event.businessId || '')}
+                    </p>
+                    <p className="text-sm text-gray-500">
                       Attendees: {event.attendees}
                     </p>
                   </div>
@@ -127,6 +185,7 @@ export default function EventManagement() {
                 <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
                 <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Location</th>
                 <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
+                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Business</th>
                 <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attendees</th>
                 <th className="relative py-3.5 pl-3 pr-4">
                   <span className="sr-only">Actions</span>
@@ -136,7 +195,7 @@ export default function EventManagement() {
             <tbody className="divide-y divide-gray-200 bg-white">
               {events.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-4 text-center text-gray-500">
+                  <td colSpan={7} className="py-4 text-center text-gray-500">
                     No events found
                   </td>
                 </tr>
@@ -154,6 +213,9 @@ export default function EventManagement() {
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {event.category}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {getBusinessName(event.businessId || '')}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       {event.attendees}
