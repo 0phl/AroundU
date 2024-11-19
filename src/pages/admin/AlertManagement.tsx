@@ -1,26 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useAlertStore } from '../../stores/alertStore';
 import AlertForm from '../../components/admin/AlertForm';
 import type { Alert } from '../../types';
 import { format } from 'date-fns';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export default function AlertManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
-  const { alerts, addAlert, updateAlert, deleteAlert } = useAlertStore();
+  const { alerts, loading, error, fetchAlerts, addAlert, updateAlert, deleteAlert } = useAlertStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (alertData: Partial<Alert>) => {
-    if (editingAlert) {
-      updateAlert(editingAlert.id, alertData);
-    } else {
-      addAlert({
-        ...alertData,
-        id: Math.random().toString(36).substr(2, 9)
-      } as Alert);
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
     }
-    setShowForm(false);
-    setEditingAlert(null);
+
+    if (user.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+
+    fetchAlerts();
+  }, [user, navigate, fetchAlerts]);
+
+  const handleSubmit = async (alertData: Partial<Alert>) => {
+    try {
+      if (editingAlert) {
+        await updateAlert(editingAlert.id, alertData);
+        toast.success('Alert updated successfully');
+      } else {
+        await addAlert({
+          ...alertData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as Omit<Alert, 'id'>);
+        toast.success('Alert created successfully');
+      }
+      setShowForm(false);
+      setEditingAlert(null);
+    } catch (error) {
+      console.error('Error saving alert:', error);
+      toast.error('Failed to save alert');
+    }
   };
 
   const handleEdit = (alert: Alert) => {

@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAlertStore } from '../stores/alertStore';
 import { BellIcon, ExclamationTriangleIcon, InformationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Alerts() {
-  const { alerts } = useAlertStore();
+  const { alerts, loading, error, fetchAlerts } = useAlertStore();
   const { user } = useAuth();
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [fetchAlerts]);
 
   // Filter alerts based on status, expiration, and user role
   const activeAlerts = alerts.filter(alert => {
@@ -18,6 +22,22 @@ export default function Alerts() {
     
     return isActive && isNotExpired && isTargetAudience;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading alerts...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-500 text-center">
+        Error loading alerts: {error}
+      </div>
+    );
+  }
 
   const getAlertIcon = (type: string) => {
     switch (type) {

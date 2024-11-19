@@ -48,4 +48,17 @@ export interface Discount {
   terms?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  priority: 'low' | 'medium' | 'high';
+  status: 'active' | 'inactive';
+  targetAudience: 'all' | 'students' | 'businesses';
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt?: Date | null;
 } 
