@@ -6,6 +6,7 @@ import DiscountForm from '../../components/admin/DiscountForm';
 import type { Discount } from '../../types';
 import { format } from 'date-fns';
 import ConfirmationModal from '../../components/admin/ConfirmationModal';
+import { toast } from 'react-hot-toast';
 
 export default function DiscountManagement() {
   const [showForm, setShowForm] = useState(false);
@@ -104,14 +105,17 @@ export default function DiscountManagement() {
 
       if (editingDiscount) {
         await updateDiscount(editingDiscount.id, discountData);
+        toast.success('Discount updated successfully');
       } else {
         await addDiscount(discountData);
+        toast.success('Discount added successfully');
       }
       
       setShowForm(false);
       setEditingDiscount(null);
     } catch (error) {
       console.error('Error saving discount:', error);
+      toast.error('Failed to save discount');
     }
   };
 

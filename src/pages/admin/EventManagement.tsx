@@ -37,25 +37,27 @@ export default function EventManagement() {
     fetchBusinesses();
   }, [user, authLoading, navigate, fetchEvents, fetchBusinesses]);
 
-  const handleSubmit = async (eventData: Partial<Event>) => {
+  const handleSubmit = async (formData: Omit<Event, 'id'>) => {
     try {
+      const eventData = {
+        ...formData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
       if (editingEvent) {
         await updateEvent(editingEvent.id, eventData);
         toast.success('Event updated successfully');
       } else {
-        await addEvent({
-          ...eventData,
-          attendees: 0,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        } as Omit<Event, 'id'>);
-        toast.success('Event created successfully');
+        await addEvent(eventData);
+        toast.success('Event added successfully');
       }
+      
       setShowForm(false);
       setEditingEvent(null);
     } catch (error) {
       console.error('Error saving event:', error);
-      toast.error('Failed to save event');
+      toast.error('Error saving event. Please try again.');
     }
   };
 
@@ -74,6 +76,8 @@ export default function EventManagement() {
       try {
         await deleteEvent(eventToDelete);
         toast.success('Event deleted successfully');
+        setDeleteModalOpen(false);
+        setEventToDelete(null);
       } catch (error) {
         console.error('Error deleting event:', error);
         toast.error('Failed to delete event');

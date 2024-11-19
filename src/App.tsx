@@ -19,40 +19,53 @@ import 'leaflet/dist/leaflet.css';
 
 function App() {
   return (
-    <Router>
-      <Toaster position="top-right" />
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="map" element={<Map />} />
-          <Route path="top-rated" element={<TopRated />} />
-          <Route path="events" element={<Events />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="businesses" element={<Businesses />} />
-          <Route path="businesses/:id" element={<BusinessDetails />} />
-          <Route path="discounts" element={<Discounts />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
+    <>
+      <Toaster
+        position="center-center"
+        toastOptions={{
+          style: {
+            background: '#333',
+            color: '#fff',
+            padding: '16px',
+            borderRadius: '8px',
+          },
+          duration: 2000,
+        }}
+      />
+      <Router>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="map" element={<Map />} />
+            <Route path="top-rated" element={<TopRated />} />
+            <Route path="events" element={<Events />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="businesses" element={<Businesses />} />
+            <Route path="businesses/:id" element={<BusinessDetails />} />
+            <Route path="discounts" element={<Discounts />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
           <Route
-            path="profile"
+            path="admin/*"
             element={
-              <ProtectedRoute>
-                <Profile />
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />
-        </Route>
-
-        <Route
-          path="admin/*"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </>
   );
 }
 export default App;

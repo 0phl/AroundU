@@ -34,11 +34,13 @@ export default function BusinessManagement() {
 
       if (editingBusiness) {
         await updateBusiness(editingBusiness.id, businessWithSearchTerms);
+        toast.success('Business updated successfully');
       } else {
         await addBusiness({
           ...businessWithSearchTerms,
           createdAt: new Date()
         } as Omit<Business, 'id'>);
+        toast.success('Business added successfully');
       }
       setShowForm(false);
       setEditingBusiness(null);
