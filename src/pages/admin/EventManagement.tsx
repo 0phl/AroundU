@@ -202,81 +202,79 @@ export default function EventManagement() {
 
             {/* Desktop View */}
             <div className="hidden md:block mt-8">
-              <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-                <table className="min-w-full divide-y divide-gray-300">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Title</th>
-                      <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
-                      <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Location</th>
-                      <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
-                      <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Business</th>
-                      <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attendees</th>
-                      <th className="relative py-3.5 pl-3 pr-4">
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {events.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="py-4 text-center text-gray-500">
-                          No events found
-                        </td>
-                      </tr>
-                    ) : (
-                      events.map((event) => (
-                        <tr 
-                          key={event.id}
-                          className={`cursor-pointer ${selectedEvent?.id === event.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                            {event.title}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {format(new Date(event.date), 'PPp')}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {event.location}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {event.category}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {getBusinessName(event.businessId || '')}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            <div className="flex items-center">
-                              <UserGroupIcon className="h-4 w-4 mr-1" />
-                              {event.attendees}
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(event);
-                              }}
-                              className="text-blue-600 hover:text-blue-900 mr-4"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(event.id);
-                              }}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          </td>
+              <div className="overflow-x-auto">
+                <div className="inline-block min-w-full align-middle">
+                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-300">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 w-[200px]">Title</th>
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-[180px]">Date</th>
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-[200px]">Location</th>
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-[120px]">Category</th>
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-[150px]">Business</th>
+                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-[100px]">Attendees</th>
+                          <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 w-[120px]">
+                            <span className="sr-only">Actions</span>
+                          </th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {events.map((event) => (
+                          <tr 
+                            key={event.id}
+                            className={`cursor-pointer ${selectedEvent?.id === event.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                            onClick={() => setSelectedEvent(event)}
+                          >
+                            <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
+                              <div className="truncate max-w-[180px]">{event.title}</div>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {format(new Date(event.date), 'PPp')}
+                            </td>
+                            <td className="px-3 py-4 text-sm text-gray-500">
+                              <div className="truncate max-w-[180px]">{event.location}</div>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {event.category}
+                            </td>
+                            <td className="px-3 py-4 text-sm text-gray-500">
+                              <div className="truncate max-w-[130px]">{getBusinessName(event.businessId || '')}</div>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              <div className="flex items-center justify-center">
+                                <UserGroupIcon className="h-4 w-4 mr-1" />
+                                {event.attendees}
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                              <div className="flex justify-end space-x-3">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(event);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(event.id);
+                                  }}
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

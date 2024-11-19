@@ -29,12 +29,12 @@ export default function Businesses() {
         </div>
       </div>
       
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pb-20">
         {businesses.map((business) => (
           <Link
             key={business.id}
             to={`/businesses/${business.id}`}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full"
           >
             {business.photos && business.photos.length > 0 && (
               <img
@@ -43,7 +43,7 @@ export default function Businesses() {
                 className="w-full h-48 object-cover"
               />
             )}
-            <div className="p-4">
+            <div className="p-4 flex flex-col h-full">
               <h2 className="text-lg font-semibold">{business.name}</h2>
               <p className="text-sm text-gray-600">{business.category}</p>
               <div className="flex items-center mt-2">
@@ -61,7 +61,7 @@ export default function Businesses() {
                   ({business.reviewCount} reviews)
                 </span>
               </div>
-              <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+              <p className="mt-2 text-sm text-gray-600">
                 {business.description}
               </p>
             </div>

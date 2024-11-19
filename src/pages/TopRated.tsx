@@ -38,13 +38,13 @@ export default function TopRated() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-20">
         {topRatedBusinesses.length > 0 ? (
           topRatedBusinesses.map((business) => (
             <Link 
               key={business.id}
               to={`/businesses/${business.id}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-auto"
             >
               {business.photos && business.photos.length > 0 && (
                 <img
@@ -53,27 +53,29 @@ export default function TopRated() {
                   className="w-full h-48 object-cover"
                 />
               )}
-              <div className="p-4">
-                <h2 className="text-lg font-semibold">{business.name}</h2>
-                <p className="text-sm text-gray-600">{business.category}</p>
-                <div className="flex items-center mt-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className={`h-5 w-5 ${
-                          i < business.rating ? 'text-yellow-400' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
+              <div className="p-4 flex flex-col flex-1">
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{business.name}</h2>
+                  <p className="text-sm text-gray-600">{business.category}</p>
+                  <div className="flex items-center mt-2">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < business.rating ? 'text-yellow-400' : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-sm text-gray-600">
+                      ({business.reviewCount} reviews)
+                    </span>
                   </div>
-                  <span className="ml-2 text-sm text-gray-600">
-                    ({business.reviewCount} reviews)
-                  </span>
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                    {business.description}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                  {business.description}
-                </p>
               </div>
             </Link>
           ))

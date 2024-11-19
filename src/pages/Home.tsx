@@ -5,6 +5,7 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import { useState, useMemo } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { Business } from '../types';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
@@ -127,22 +128,26 @@ export default function Home() {
       {/* Nearby Businesses */}
       {!searchQuery && (
         <div className="px-4 py-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Nearby Businesses</h2>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900">Nearby Places</h2>
+              <p className="mt-1 text-sm text-gray-600">Discover local businesses around you</p>
+            </div>
             <Link 
               to="/map" 
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
             >
               View All on Map
+              <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
             {nearbyBusinesses.length > 0 ? (
               nearbyBusinesses.map((business) => (
                 <BusinessCard key={business.id} business={business} />
               ))
             ) : (
-              <div className="col-span-2 text-center py-8 text-gray-500">
+              <div className="col-span-full text-center py-8 text-gray-500">
                 No nearby businesses found
               </div>
             )}
@@ -158,20 +163,22 @@ function BusinessCard({ business }: { business: Business & { distance: number } 
   return (
     <Link
       to={`/businesses/${business.id}`}
-      className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-duration-300"
+      className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
     >
       {business.photos && business.photos.length > 0 && (
-        <div className="h-48 bg-gray-200">
+        <div className="relative h-48 overflow-hidden">
           <img
             src={business.photos[0]}
             alt={business.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
           />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+            <h3 className="font-semibold text-white text-lg">{business.name}</h3>
+            <p className="text-white/90 text-sm">{business.category}</p>
+          </div>
         </div>
       )}
-      <div className="p-4">
-        <h3 className="font-semibold">{business.name}</h3>
-        <p className="text-sm text-gray-600">{business.category}</p>
+      <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center mt-1">
           <div className="flex text-yellow-400">
             {[...Array(5)].map((_, i) => (
@@ -187,9 +194,19 @@ function BusinessCard({ business }: { business: Business & { distance: number } 
             ({business.reviewCount})
           </span>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
-          {business.distance.toFixed(1)} km away
-        </p>
+        {business.description && (
+          <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+            {business.description}
+          </p>
+        )}
+        <div className="mt-auto pt-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-blue-600">
+            {business.distance.toFixed(1)} km away
+          </span>
+          <span className="text-sm text-blue-600 group-hover:translate-x-1 transition-transform duration-200">
+            View Details →
+          </span>
+        </div>
       </div>
     </Link>
   );

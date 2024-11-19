@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { useAuth } from '../hooks/useAuth';
 import NavigationButtons from './NavigationButtons';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import logo from '../assets/logo.svg';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -37,12 +38,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Left side - Logo and nav links */}
-            <div className="flex items-center space-x-8">
-              <Link to="/" className="text-xl font-bold">
-                AroundU
+            <div className="flex items-center">
+              {/* Logo and Title - Now with more left margin */}
+              <Link to="/" className="flex items-center space-x-2 mr-12">
+                <img src={logo} alt="AroundU Logo" className="w-8 h-8" />
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <span className="text-xl font-extrabold tracking-tight">
+                    Around<span className="text-blue-300">U</span>
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-blue-200 sm:ml-2 font-medium tracking-wider whitespace-nowrap">
+                    DISCOVER LOCAL BUSINESS
+                  </span>
+                </div>
               </Link>
-              {/* Desktop Navigation */}
-              <div className="hidden sm:flex space-x-4">
+              
+              {/* Navigation Links - Now with proper spacing */}
+              <div className="hidden sm:flex space-x-6">
                 {navLinks.map((link) => (
                   <Link
                     key={link.to}

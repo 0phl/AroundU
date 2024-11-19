@@ -9,6 +9,7 @@ import {
   UserGroupIcon,
   BellIcon,
   ChartBarIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
 import BusinessManagement from './BusinessManagement';
 import EventManagement from './EventManagement';
@@ -19,6 +20,7 @@ import Analytics from './Analytics';
 import { useAuth } from '../../hooks/useAuth';
 import { Menu, Transition } from '@headlessui/react';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
+import logo from '../../assets/logo.svg';
 
 const adminNavigation = [
   { name: 'Businesses', href: '/admin/businesses', icon: BuildingStorefrontIcon },
@@ -60,8 +62,16 @@ export default function AdminDashboard() {
                 <span className="sr-only">Open sidebar</span>
                 <Bars3Icon className="h-6 w-6" aria-hidden="true" />
               </button>
-              <Link to="/" className="text-xl font-bold ml-2 md:ml-0">
-                AroundU
+              <Link to="/" className="flex items-center space-x-2 ml-4 md:ml-0 mr-12">
+                <img src={logo} alt="AroundU Logo" className="w-8 h-8" />
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <span className="text-xl font-extrabold tracking-tight">
+                    Around<span className="text-blue-300">U</span>
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-blue-200 sm:ml-2 font-medium tracking-wider whitespace-nowrap">
+                    DISCOVER LOCAL BUSINESS
+                  </span>
+                </div>
               </Link>
             </div>
 
