@@ -4,10 +4,13 @@ import { db } from '../../lib/firebase';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import type { User } from '../../types';
+import ConfirmationModal from '../../components/admin/ConfirmationModal';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   // Fetch users from Firestore
   const fetchUsers = async () => {
@@ -58,18 +61,21 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setUserToDelete(id);
+    setDeleteModalOpen(true);
+  };
 
-    try {
-      await deleteDoc(doc(db, 'users', userId));
-      setUsers(users.filter(user => user.id !== userId));
-      toast.success('User deleted successfully');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+  const confirmDelete = async () => {
+    if (userToDelete) {
+      try {
+        await deleteDoc(doc(db, 'users', userToDelete));
+        setUsers(users.filter(user => user.id !== userToDelete));
+        toast.success('User deleted successfully');
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        toast.error('Failed to delete user');
+      }
     }
   };
 
@@ -208,6 +214,17 @@ export default function UserManagement() {
           </div>
         ))}
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+      />
     </div>
   );
 }

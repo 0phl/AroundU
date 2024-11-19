@@ -5,6 +5,7 @@ import { useBusinessStore } from '../../stores/businessStore';
 import DiscountForm from '../../components/admin/DiscountForm';
 import type { Discount } from '../../types';
 import { format } from 'date-fns';
+import ConfirmationModal from '../../components/admin/ConfirmationModal';
 
 export default function DiscountManagement() {
   const [showForm, setShowForm] = useState(false);
@@ -12,6 +13,8 @@ export default function DiscountManagement() {
   const [error, setError] = useState<string | null>(null);
   const { discounts, loading, fetchDiscounts, addDiscount, updateDiscount, deleteDiscount } = useDiscountStore();
   const { businesses, fetchBusinesses } = useBusinessStore();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [discountToDelete, setDiscountToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('DiscountManagement mounted');
@@ -117,15 +120,19 @@ export default function DiscountManagement() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this discount?')) {
+  const handleDelete = (id: string) => {
+    setDiscountToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (discountToDelete) {
       try {
-        await deleteDiscount(id);
-        // Refresh the discounts after deleting
-        fetchDiscounts();
+        await deleteDiscount(discountToDelete);
+        toast.success('Discount deleted successfully');
       } catch (error) {
         console.error('Error deleting discount:', error);
-        alert('There was an error deleting the discount. Please try again.');
+        toast.error('Failed to delete discount');
       }
     }
   };
@@ -151,137 +158,150 @@ export default function DiscountManagement() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Discounts</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Manage all discounts and promotions
-          </p>
+    <>
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="sm:flex sm:items-center">
+          <div className="sm:flex-auto">
+            <h1 className="text-2xl font-semibold text-gray-900">Discounts</h1>
+            <p className="mt-2 text-sm text-gray-700">
+              Manage all discounts and promotions
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <button
+              onClick={() => setShowForm(true)}
+              className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-blue-500"
+            >
+              <PlusIcon className="h-5 w-5 inline-block mr-2" />
+              Add Discount
+            </button>
+          </div>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <button
-            onClick={() => setShowForm(true)}
-            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-blue-500"
-          >
-            <PlusIcon className="h-5 w-5 inline-block mr-2" />
-            Add Discount
-          </button>
-        </div>
-      </div>
 
-      {/* Mobile View */}
-      <div className="mt-8 md:hidden">
-        {discounts.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">No discounts found</div>
-        ) : (
-          <div className="space-y-4">
-            {discounts.map((discount) => (
-              <div key={discount.id} className="bg-white rounded-lg shadow p-4">
-                <div className="flex flex-col">
-                  <h3 className="text-base font-semibold text-gray-900">{discount.title}</h3>
-                  <p className="text-sm text-gray-600">{getBusinessName(discount.businessId)}</p>
-                  <div className="mt-2 space-y-2">
-                    <p className="text-sm text-gray-500">{discount.description}</p>
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-500">
-                        {discount.discountType}
-                      </span>
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {discount.discountValue}%
-                      </span>
+        {/* Mobile View */}
+        <div className="mt-8 md:hidden">
+          {discounts.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">No discounts found</div>
+          ) : (
+            <div className="space-y-4">
+              {discounts.map((discount) => (
+                <div key={discount.id} className="bg-white rounded-lg shadow p-4">
+                  <div className="flex flex-col">
+                    <h3 className="text-base font-semibold text-gray-900">{discount.title}</h3>
+                    <p className="text-sm text-gray-600">{getBusinessName(discount.businessId)}</p>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm text-gray-500">{discount.description}</p>
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-500">
+                          {discount.discountType}
+                        </span>
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {discount.discountValue}%
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Valid until: {format(new Date(discount.expiryDate), 'PP')}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      Valid until: {format(new Date(discount.expiryDate), 'PP')}
-                    </p>
+                  </div>
+                  <div className="mt-4 flex justify-end space-x-3">
+                    <button
+                      onClick={() => handleEdit(discount)}
+                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(discount.id)}
+                      className="text-red-600 hover:text-red-900 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                <div className="mt-4 flex justify-end space-x-3">
-                  <button
-                    onClick={() => handleEdit(discount)}
-                    className="text-blue-600 hover:text-blue-900 text-sm font-medium"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(discount.id)}
-                    className="text-red-600 hover:text-red-900 text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Desktop View */}
-      <div className="hidden md:block mt-8">
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Title</th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Business</th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Value</th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Expiry</th>
-                <th className="relative py-3.5 pl-3 pr-4">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {discounts.length === 0 ? (
+        {/* Desktop View */}
+        <div className="hidden md:block mt-8">
+          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan={6} className="py-4 text-center text-gray-500">
-                    No discounts found
-                  </td>
+                  <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Title</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Business</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Value</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Expiry</th>
+                  <th className="relative py-3.5 pl-3 pr-4">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              ) : (
-                discounts.map((discount) => (
-                  <tr key={discount.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                      {discount.title}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {getBusinessName(discount.businessId)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {discount.discountType}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {discount.discountValue}%
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {discount.status}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {format(new Date(discount.expiryDate), 'PP')}
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(discount)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(discount.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {discounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-4 text-center text-gray-500">
+                      No discounts found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  discounts.map((discount) => (
+                    <tr key={discount.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
+                        {discount.title}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {getBusinessName(discount.businessId)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {discount.discountType}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {discount.discountValue}%
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {discount.status}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {format(new Date(discount.expiryDate), 'PP')}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(discount)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(discount.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDiscountToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Discount"
+        message="Are you sure you want to delete this discount? This action cannot be undone."
+      />
+    </>
   );
 }
