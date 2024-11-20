@@ -8,6 +8,7 @@ import type { Business } from '../types';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useDiscountStore } from '../stores/discountStore';
 import { format } from 'date-fns';
+import { MapPinIcon } from '@heroicons/react/24/outline';
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
@@ -205,17 +206,16 @@ export default function Home() {
       {/* Nearby Businesses */}
       {!searchQuery && (
         <div className="px-4 py-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="relative mb-6">
             <div>
               <h2 className="text-2xl font-semibold text-gray-900">Nearby Places</h2>
               <p className="mt-1 text-sm text-gray-600">Discover local businesses around you</p>
             </div>
             <Link 
               to="/map" 
-              className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              className="absolute -top-1 right-0 text-xs text-gray-500 hover:text-gray-700 transition-colors duration-200"
             >
-              View All on Map
-              <ArrowRightIcon className="w-4 h-4" />
+              view all →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
