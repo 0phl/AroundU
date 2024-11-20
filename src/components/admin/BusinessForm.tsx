@@ -27,28 +27,6 @@ const DAYS_OF_WEEK: DayOfWeek[] = [
   'sunday'
 ];
 
-const formatTimeForInput = (time12h: string) => {
-  const [time, period] = time12h.split(' ');
-  const [hours, minutes] = time.split(':');
-  let hour = parseInt(hours, 10);
-  
-  if (period === 'PM' && hour !== 12) {
-    hour += 12;
-  } else if (period === 'AM' && hour === 12) {
-    hour = 0;
-  }
-  
-  return `${hour.toString().padStart(2, '0')}:${minutes}`;
-};
-
-const formatTimeForDisplay = (time24h: string) => {
-  const [hours, minutes] = time24h.split(':');
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-};
-
 export default function BusinessForm({ onSubmit, onCancel, initialData }: BusinessFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string>(initialData?.photos?.[0] || '');
@@ -282,48 +260,48 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
       {/* Business Hours Section */}
       <div className="mt-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Business Hours</h3>
-        <div className="grid gap-4">
+        <div className="space-y-4">
           {DAYS_OF_WEEK.map((day) => (
-            <div key={day} className="grid grid-cols-4 gap-4 items-center">
-              <label className="text-sm font-medium text-gray-700 capitalize">
-                {day}
-              </label>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={hours[day].isClosed}
-                  onChange={(e) => handleHoursChange(day, 'isClosed', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2"
-                />
-                <span className="text-sm text-gray-500">Closed</span>
+            <div key={day} className="flex flex-col sm:grid sm:grid-cols-4 gap-4">
+              <div className="flex items-center justify-between sm:block">
+                <label className="text-sm font-medium text-gray-700 capitalize">
+                  {day}
+                </label>
+                <div className="flex items-center sm:mt-2">
+                  <input
+                    type="checkbox"
+                    checked={hours[day].isClosed}
+                    onChange={(e) => handleHoursChange(day, 'isClosed', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2"
+                  />
+                  <span className="text-sm text-gray-500">Closed</span>
+                </div>
               </div>
-              <div>
-                <input
-                  type="time"
-                  value={hours[day].open}
-                  onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                    hours[day].isClosed ? 'opacity-50' : ''
-                  }`}
-                  disabled={hours[day].isClosed}
-                />
-                <span className="text-xs text-gray-500 mt-1">
-                  {!hours[day].isClosed && formatTimeForDisplay(hours[day].open)}
-                </span>
-              </div>
-              <div>
-                <input
-                  type="time"
-                  value={hours[day].close}
-                  onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                    hours[day].isClosed ? 'opacity-50' : ''
-                  }`}
-                  disabled={hours[day].isClosed}
-                />
-                <span className="text-xs text-gray-500 mt-1">
-                  {!hours[day].isClosed && formatTimeForDisplay(hours[day].close)}
-                </span>
+              <div className="grid grid-cols-2 gap-2 sm:col-span-3">
+                <div className="relative">
+                  <label className="block text-xs text-gray-500 mb-1">Opening Time</label>
+                  <input
+                    type="time"
+                    value={hours[day].open}
+                    onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
+                    className={`block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                      hours[day].isClosed ? 'opacity-50 bg-gray-50' : ''
+                    } sm:text-sm`}
+                    disabled={hours[day].isClosed}
+                  />
+                </div>
+                <div className="relative">
+                  <label className="block text-xs text-gray-500 mb-1">Closing Time</label>
+                  <input
+                    type="time"
+                    value={hours[day].close}
+                    onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
+                    className={`block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                      hours[day].isClosed ? 'opacity-50 bg-gray-50' : ''
+                    } sm:text-sm`}
+                    disabled={hours[day].isClosed}
+                  />
+                </div>
               </div>
             </div>
           ))}

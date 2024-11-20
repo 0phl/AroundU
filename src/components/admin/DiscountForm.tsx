@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useBusinessStore } from '../../stores/businessStore';
 import type { Discount } from '../../types';
 
@@ -11,28 +11,40 @@ interface DiscountFormProps {
 
 export default function DiscountForm({ onSubmit, onCancel, initialData }: DiscountFormProps) {
   const { businesses } = useBusinessStore();
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: initialData || {
-      title: '',
-      description: '',
-      businessId: '',
-      discountType: 'percentage',
-      discountValue: '',
-      expiryDate: '',
-      terms: '',
-      status: 'active'
+  const { register, handleSubmit, formState: { errors }, control } = useForm({
+    defaultValues: {
+      ...(initialData || {
+        title: '',
+        description: '',
+        businessId: '',
+        discountType: 'percentage',
+        discountValue: '',
+        expiryDate: '',
+        terms: '',
+        status: 'active'
+      }),
+      expiryDate: initialData?.expiryDate ? new Date(initialData.expiryDate).toISOString().slice(0, 16) : ''
     }
   });
 
+  const handleFormSubmit = (data: any) => {
+    // Combine date and time before submitting
+    const formData = {
+      ...data,
+      expiryDate: new Date(data.expiryDate)
+    };
+    onSubmit(formData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div>
         <label htmlFor="businessId" className="block text-sm font-medium text-gray-700">
           Select Business
         </label>
         <select
           {...register('businessId', { required: 'Business is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         >
           <option value="">Select a business</option>
           {businesses.map((business) => (
@@ -53,7 +65,7 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
         <input
           type="text"
           {...register('title', { required: 'Title is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         />
         {errors.title && (
           <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -67,21 +79,21 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
         <textarea
           {...register('description', { required: 'Description is required' })}
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         />
         {errors.description && (
           <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="discountType" className="block text-sm font-medium text-gray-700">
             Discount Type
           </label>
           <select
             {...register('discountType', { required: 'Discount type is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           >
             <option value="percentage">Percentage</option>
             <option value="fixed">Fixed Amount</option>
@@ -98,20 +110,61 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
               required: 'Discount value is required',
               min: { value: 0, message: 'Value must be positive' }
             })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
         </div>
       </div>
 
-      <div>
-        <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
-          Expiry Date
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Expiry Date and Time
         </label>
-        <input
-          type="datetime-local"
-          {...register('expiryDate', { required: 'Expiry date is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="expiryDate" className="block text-xs text-gray-500 mb-1">
+              Date
+            </label>
+            <Controller
+              name="expiryDate"
+              control={control}
+              rules={{ required: 'Expiry date is required' }}
+              render={({ field }) => (
+                <input
+                  type="date"
+                  value={field.value ? field.value.split('T')[0] : ''}
+                  onChange={(e) => {
+                    const time = field.value ? field.value.split('T')[1] : '00:00';
+                    field.onChange(`${e.target.value}T${time}`);
+                  }}
+                  className="block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              )}
+            />
+          </div>
+          <div>
+            <label htmlFor="expiryTime" className="block text-xs text-gray-500 mb-1">
+              Time
+            </label>
+            <Controller
+              name="expiryDate"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="time"
+                  value={field.value ? field.value.split('T')[1]?.slice(0, 5) : ''}
+                  onChange={(e) => {
+                    const date = field.value ? field.value.split('T')[0] : new Date().toISOString().split('T')[0];
+                    field.onChange(`${date}T${e.target.value}`);
+                  }}
+                  className="block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              )}
+            />
+          </div>
+        </div>
+        {errors.expiryDate && (
+          <p className="mt-1 text-sm text-red-600">{errors.expiryDate.message}</p>
+        )}
       </div>
 
       <div>
@@ -121,8 +174,11 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
         <textarea
           {...register('terms', { required: 'Terms are required' })}
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         />
+        {errors.terms && (
+          <p className="mt-1 text-sm text-red-600">{errors.terms.message}</p>
+        )}
       </div>
 
       <div>
@@ -131,7 +187,7 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
         </label>
         <select
           {...register('status', { required: 'Status is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         >
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -142,13 +198,13 @@ export default function DiscountForm({ onSubmit, onCancel, initialData }: Discou
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {initialData ? 'Update' : 'Create'} Discount
         </button>

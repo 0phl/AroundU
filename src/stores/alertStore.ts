@@ -21,8 +21,11 @@ export const useAlertStore = create<AlertStore>((set) => ({
   fetchAlerts: async () => {
     set({ loading: true, error: null });
     try {
+      console.log('Attempting to fetch alerts from Firebase...');
       const alertsRef = collection(db, 'alerts');
       const querySnapshot = await getDocs(alertsRef);
+      
+      console.log('Raw alerts data:', querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       
       const alerts = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -35,10 +38,12 @@ export const useAlertStore = create<AlertStore>((set) => ({
         } as Alert;
       });
       
+      console.log('Processed alerts:', alerts);
       set({ alerts, loading: false });
     } catch (error) {
       console.error('Error fetching alerts:', error);
-      set({ error: 'Failed to fetch alerts', loading: false });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch alerts';
+      set({ error: errorMessage, loading: false, alerts: [] });
     }
   },
 

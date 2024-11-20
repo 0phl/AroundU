@@ -38,23 +38,49 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
           id="title"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           required
         />
       </div>
 
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
           Date and Time
         </label>
-        <input
-          type="datetime-local"
-          id="date"
-          value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          required
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="date" className="block text-xs text-gray-500 mb-1">
+              Date
+            </label>
+            <input
+              type="date"
+              id="date"
+              value={formData.date.split('T')[0]}
+              onChange={(e) => {
+                const time = formData.date.split('T')[1] || '00:00';
+                setFormData({ ...formData, date: `${e.target.value}T${time}` });
+              }}
+              className="block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="time" className="block text-xs text-gray-500 mb-1">
+              Time
+            </label>
+            <input
+              type="time"
+              id="time"
+              value={formData.date.split('T')[1]?.slice(0, 5) || ''}
+              onChange={(e) => {
+                const date = formData.date.split('T')[0] || new Date().toISOString().split('T')[0];
+                setFormData({ ...formData, date: `${date}T${e.target.value}` });
+              }}
+              className="block w-full px-3 py-2 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+          </div>
+        </div>
       </div>
 
       <div>
@@ -65,7 +91,7 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
           id="businessId"
           value={formData.businessId}
           onChange={(e) => setFormData({ ...formData, businessId: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
         >
           <option value="">Select a business</option>
           {businesses.map((business) => (
@@ -85,7 +111,7 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
           id="location"
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           required
         />
       </div>
@@ -98,7 +124,7 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
           id="category"
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           required
         >
           <option value="">Select a category</option>
@@ -117,7 +143,7 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           rows={3}
           required
         />
@@ -127,13 +153,13 @@ export default function EventForm({ onSubmit, initialData, onCancel, businesses 
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {initialData ? 'Update' : 'Create'} Event
         </button>
