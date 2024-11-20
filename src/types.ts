@@ -61,4 +61,5 @@ export interface Alert {
   createdAt: Date;
   updatedAt: Date;
   expiresAt?: Date | null;
-} 
+  readBy: string[]; // Array of user IDs who have read this alert
+}

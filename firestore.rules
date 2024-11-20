@@ -10,6 +10,12 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+
+    function isUpdatingReadByOnly() {
+      let diff = request.resource.data.diff(resource.data);
+      return diff.affectedKeys().hasOnly(['readBy', 'updatedAt']) &&
+             diff.changedKeys().hasOnly(['readBy', 'updatedAt']);
+    }
     
     // Events collection rules
     match /events/{eventId} {
@@ -60,7 +66,10 @@ service cloud.firestore {
     // Alerts collection rules
     match /alerts/{alertId} {
       allow read: if true;
-      allow write: if isAdmin();
+      // Allow admins full access to alerts
+      allow create, delete: if isAdmin();
+      // Allow both admins and authenticated users to update readBy array
+      allow update: if isAdmin() || (isAuthenticated() && isUpdatingReadByOnly());
     }
   }
 }
