@@ -21,7 +21,7 @@ export default function Layout() {
     };
 
     initializeData();
-  }, []); // Empty dependency array to run only once on mount
+  }, []);
 
   return <MainLayout><Outlet /></MainLayout>;
 }

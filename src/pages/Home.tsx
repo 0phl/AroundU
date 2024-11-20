@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBusinessStore } from '../stores/businessStore';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -6,6 +6,8 @@ import { useState, useMemo } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { Business } from '../types';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { useDiscountStore } from '../stores/discountStore';
+import { format } from 'date-fns';
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
@@ -20,9 +22,35 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 export default function Home() {
-  const { businesses } = useBusinessStore();
+  const { businesses, loading: businessLoading, fetchBusinesses } = useBusinessStore();
+  const { discounts, loading: discountLoading, fetchDiscounts } = useDiscountStore();
   const [searchQuery, setSearchQuery] = useState('');
   const center = { lat: 14.458942866502959, lng: 120.96075553643246 }; // SDCA coordinates
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setError(null);
+        await Promise.all([
+          fetchDiscounts(),
+          fetchBusinesses()
+        ]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError('Failed to load data. Please try again later.');
+      }
+    };
+    loadData();
+  }, [fetchDiscounts, fetchBusinesses]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-600">
+        {error}
+      </div>
+    );
+  }
 
   // Separate the search results and nearby businesses
   const { searchResults, nearbyBusinesses } = useMemo(() => {
@@ -62,9 +90,27 @@ export default function Home() {
     return { searchResults, nearbyBusinesses };
   }, [businesses, searchQuery, center]);
 
+  // Get featured promotions (active discounts with highest discount values)
+  const featuredPromotions = discounts
+    .filter(discount => 
+      discount.status === 'active' && 
+      new Date(discount.expiryDate) > new Date()
+    )
+    .sort((a, b) => b.discountValue - a.discountValue)
+    .slice(0, 2); // Get top 2 promotions
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
+
+  // Add loading check
+  if (businessLoading || discountLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -103,24 +149,55 @@ export default function Home() {
       )}
 
       {/* Featured Promotions */}
-      {!searchQuery && (
-        <div className="px-4 py-6">
-          <h2 className="text-xl font-semibold mb-4">Featured Promotions</h2>
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="font-semibold">Student Night at Cafe Latte</h3>
-              <p className="text-sm text-gray-600 mt-1">20% off all drinks from 6PM - 9PM</p>
-              <button className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
-                Get Discount
-              </button>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="font-semibold">Book Fair at PageTurner's</h3>
-              <p className="text-sm text-gray-600 mt-1">Buy 2 books, get 1 free this weekend!</p>
-              <button className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
-                Learn More
-              </button>
-            </div>
+      {!searchQuery && featuredPromotions.length > 0 && (
+        <div className="px-4 py-4">
+          <h2 className="text-lg font-semibold mb-3">Featured Promotions</h2>
+          <div className="space-y-2">
+            {featuredPromotions.map(promotion => {
+              const business = businesses.find(b => b.id === promotion.businessId);
+              if (!business) return null;
+
+              return (
+                <div
+                  key={promotion.id}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <img 
+                          src={business.photos?.[0]} 
+                          alt={business.name}
+                          className="w-8 h-8 rounded-full object-cover mr-2"
+                        />
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {promotion.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {business.name}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                        {promotion.discountValue}% OFF
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <p className="text-xs text-gray-500">
+                        Valid until {format(new Date(promotion.expiryDate), 'PP')}
+                      </p>
+                      <Link
+                        to={`/businesses/${promotion.businessId}`}
+                        className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors duration-200"
+                      >
+                        Get Discount
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
