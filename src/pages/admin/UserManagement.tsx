@@ -11,6 +11,8 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [userToUpdate, setUserToUpdate] = useState<{ id: string; newRole: string } | null>(null);
 
   // Fetch users from Firestore
   const fetchUsers = async () => {
@@ -38,23 +40,26 @@ export default function UserManagement() {
   const handleRoleUpdate = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'user' ? 'admin' : 'user';
     
-    if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-      return;
-    }
+    setUserToUpdate({ id: userId, newRole });
+    setRoleModalOpen(true);
+  };
 
+  const confirmRoleUpdate = async () => {
+    if (!userToUpdate) return;
+    
     try {
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(db, 'users', userToUpdate.id);
       await updateDoc(userRef, {
-        role: newRole,
+        role: userToUpdate.newRole,
         updatedAt: new Date()
       });
       
       // Update local state
       setUsers(users.map(u => 
-        u.id === userId ? { ...u, role: newRole, updatedAt: new Date() } : u
+        u.id === userToUpdate.id ? { ...u, role: userToUpdate.newRole, updatedAt: new Date() } : u
       ));
       
-      toast.success(`User role updated to ${newRole}`);
+      toast.success(`User role updated to ${userToUpdate.newRole}`);
     } catch (error) {
       console.error('Error updating role:', error);
       toast.error('Failed to update user role');
@@ -216,6 +221,23 @@ export default function UserManagement() {
       </div>
 
       <ConfirmationModal
+        isOpen={roleModalOpen}
+        onClose={() => {
+          setRoleModalOpen(false);
+          setUserToUpdate(null);
+        }}
+        onConfirm={confirmRoleUpdate}
+        title="Change User Role"
+        message={`Are you sure you want to change this user's role to ${userToUpdate?.newRole}? This will ${
+          userToUpdate?.newRole === 'admin' 
+            ? 'grant them full administrative access to the system.' 
+            : 'remove their administrative privileges.'
+        }`}
+        confirmLabel="Change Role"
+        confirmStyle="primary"
+      />
+
+      <ConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => {
           setDeleteModalOpen(false);
@@ -224,6 +246,8 @@ export default function UserManagement() {
         onConfirm={confirmDelete}
         title="Delete User"
         message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmStyle="danger"
       />
     </div>
   );
