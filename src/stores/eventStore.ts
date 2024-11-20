@@ -64,16 +64,17 @@ export const useEventStore = create<EventStore>((set, get) => ({
       const newEvent = {
         ...eventData,
         attendees: 0,
+        category: eventData.category || 'Event',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        date: Timestamp.fromDate(new Date(eventData.date))
+        date: Timestamp.fromDate(eventData.date || new Date())
       };
 
       const docRef = await addDoc(eventsRef, newEvent);
       const event = {
         ...newEvent,
         id: docRef.id,
-        date: new Date(eventData.date),
+        date: eventData.date || new Date(),
         createdAt: newEvent.createdAt.toDate(),
         updatedAt: newEvent.updatedAt.toDate()
       } as Event;
@@ -93,8 +94,9 @@ export const useEventStore = create<EventStore>((set, get) => ({
       const eventRef = doc(db, 'events', id);
       const updateData = {
         ...eventData,
+        category: eventData.category || undefined,
         updatedAt: Timestamp.now(),
-        date: eventData.date ? Timestamp.fromDate(new Date(eventData.date)) : undefined
+        date: eventData.date ? Timestamp.fromDate(eventData.date) : undefined
       };
 
       await updateDoc(eventRef, updateData);

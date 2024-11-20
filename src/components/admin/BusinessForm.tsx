@@ -114,147 +114,159 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="space-y-4">
-        {/* Business Image */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Business Image</label>
-          <div className="mt-1 flex items-center space-x-4">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Business preview"
-                className="h-32 w-32 object-cover rounded"
-              />
-            ) : (
-              <div className="h-32 w-32 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                <span className="text-gray-400">No image</span>
-              </div>
-            )}
-            <div className="flex flex-col space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg shadow-sm p-6 relative">
+      {/* Business Image */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Business Image</label>
+        <div className="mt-1 flex items-center space-x-4">
+          {imagePreview ? (
+            <img
+              src={imagePreview}
+              alt="Business preview"
+              className="h-32 w-32 object-cover rounded"
+            />
+          ) : (
+            <div className="h-32 w-32 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+              <span className="text-gray-400">No image</span>
+            </div>
+          )}
+          <div className="flex flex-col space-y-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200"
+            >
+              Change Image
+            </button>
+            {imagePreview && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-2 text-sm text-blue-600 hover:text-blue-700"
+                onClick={() => {
+                  setImagePreview('');
+                  setFormData(prev => ({ ...prev, photos: [] }));
+                }}
+                className="px-3 py-2 text-sm text-red-600 hover:text-red-700 transition-colors duration-200"
               >
-                Change Image
+                Remove Image
               </button>
-              {imagePreview && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImagePreview('');
-                    setFormData(prev => ({ ...prev, photos: [] }));
-                  }}
-                  className="px-3 py-2 text-sm text-red-600 hover:text-red-700"
-                >
-                  Remove Image
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-              <p className="text-xs text-gray-500">JPEG or PNG only. Max size 5MB.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Business Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Business Name</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Category</label>
-          <input
-            type="text"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Address</label>
-          <input
-            type="text"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Location</label>
-          <CoordinatePicker
-            value={formData.coordinates || { lat: 14.458942866502959, lng: 120.96075553643246 }}
-            onChange={(coords) => setFormData({ ...formData, coordinates: coords })}
-          />
-        </div>
-
-        {/* Contact Information */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
+            )}
             <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={handleImageChange}
+              className="hidden"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
+            <p className="text-xs text-gray-500">JPEG or PNG only. Max size 5MB.</p>
           </div>
         </div>
+      </div>
 
-        {/* Website */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Website URL</label>
+      {/* Business Name */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Business Name</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-colors duration-200"
+          required
+        />
+      </div>
+
+      {/* Description */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={3}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-colors duration-200 resize-none"
+          required
+        />
+      </div>
+
+      {/* Category */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Category</label>
+        <input
+          type="text"
+          value={formData.category}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-colors duration-200"
+          required
+        />
+      </div>
+
+      {/* Address */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Address</label>
+        <input
+          type="text"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-colors duration-200"
+          required
+        />
+      </div>
+
+      {/* Location */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Location</label>
+        <CoordinatePicker
+          value={formData.coordinates || { lat: 14.458942866502959, lng: 120.96075553643246 }}
+          onChange={(coords) => setFormData({ ...formData, coordinates: coords })}
+        />
+      </div>
+
+      {/* Contact Information */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Phone</label>
           <input
-            type="url"
-            value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+            transition-colors duration-200"
+            required
           />
         </div>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+            transition-colors duration-200"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Website */}
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Website URL</label>
+        <input
+          type="url"
+          value={formData.website}
+          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-colors duration-200"
+        />
       </div>
 
       {/* Business Hours Section */}
@@ -309,19 +321,23 @@ export default function BusinessForm({ onSubmit, onCancel, initialData }: Busine
       </div>
 
       {/* Form Actions */}
-      <div className="mt-6 flex justify-end space-x-3">
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+          className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md
+          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+          transition-colors duration-200 flex items-center justify-center"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700"
+          className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-md
+          hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          transition-colors duration-200 flex items-center justify-center"
         >
-          Save
+          {initialData ? 'Update' : 'Create'} Business
         </button>
       </div>
     </form>

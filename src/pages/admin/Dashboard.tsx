@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Navigation Bar */}
-      <nav className="bg-blue-600 text-white">
+      <nav className="bg-blue-600 text-white fixed w-full z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Left side */}
@@ -119,8 +119,65 @@ export default function AdminDashboard() {
       </nav>
 
       {/* Admin Content */}
-      <div className="flex">
-        {/* Mobile Sidebar */}
+      <div className="flex pt-16">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 pt-16">
+          <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white overflow-y-auto">
+            <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+              <div className="flex items-center flex-shrink-0 px-4">
+                <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
+              </div>
+              <div className="flex-1 mt-5 px-3 space-y-1">
+                {adminNavigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`${
+                      location.pathname.includes(item.href)
+                        ? 'bg-gray-100 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                  >
+                    <item.icon
+                      className={`mr-3 h-6 w-6 flex-shrink-0 ${
+                        location.pathname.includes(item.href)
+                          ? 'text-blue-600'
+                          : 'text-gray-400 group-hover:text-gray-500'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="md:pl-64 flex flex-col flex-1">
+          <main className="flex-1 overflow-y-auto">
+            <div className="p-4 md:p-8">
+              <Routes>
+                <Route path="/" element={<Navigate to="/admin/businesses" replace />} />
+                <Route path="businesses/*" element={<BusinessManagement />} />
+                <Route path="events/*" element={<EventManagement />} />
+                <Route path="discounts/*" element={
+                  <ErrorBoundary>
+                    <DiscountManagement />
+                  </ErrorBoundary>
+                } />
+                <Route path="users/*" element={<UserManagement />} />
+                <Route path="alerts/*" element={<AlertManagement />} />
+                <Route path="analytics" element={<Analytics />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && (
         <div
           className={`${
             sidebarOpen ? 'block' : 'hidden'
@@ -174,60 +231,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Desktop Sidebar */}
-        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 pt-16">
-          <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white">
-            <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
-              </div>
-              <div className="flex-1 mt-5 px-3 space-y-1">
-                {adminNavigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`${
-                      location.pathname.includes(item.href)
-                        ? 'bg-gray-100 text-blue-600'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
-                  >
-                    <item.icon
-                      className={`mr-3 h-6 w-6 flex-shrink-0 ${
-                        location.pathname.includes(item.href)
-                          ? 'text-blue-600'
-                          : 'text-gray-400 group-hover:text-gray-500'
-                      }`}
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="md:pl-64 flex flex-col flex-1">
-          <div className="flex-1 p-4 md:p-8">
-            <Routes>
-              <Route path="/" element={<Navigate to="/admin/businesses" replace />} />
-              <Route path="businesses/*" element={<BusinessManagement />} />
-              <Route path="events/*" element={<EventManagement />} />
-              <Route path="discounts/*" element={
-                <ErrorBoundary>
-                  <DiscountManagement />
-                </ErrorBoundary>
-              } />
-              <Route path="users/*" element={<UserManagement />} />
-              <Route path="alerts/*" element={<AlertManagement />} />
-              <Route path="analytics" element={<Analytics />} />
-            </Routes>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

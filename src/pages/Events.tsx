@@ -18,6 +18,36 @@ export default function Events() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
+  // Helper function to check event status
+  const getEventStatus = (eventDate: Date) => {
+    const now = new Date();
+    const eventDateTime = new Date(eventDate);
+    const diffInHours = (eventDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    // Hide events that are more than 24 hours old
+    if (diffInHours < -24) {
+      return 'hidden';
+    }
+    
+    // If event is today and current time is within event hours (assuming events last 2 hours)
+    if (
+      eventDateTime.getDate() === now.getDate() &&
+      eventDateTime.getMonth() === now.getMonth() &&
+      eventDateTime.getFullYear() === now.getFullYear() &&
+      Math.abs(diffInHours) <= 2
+    ) {
+      return 'ongoing';
+    }
+    
+    // If event has ended (more than 2 hours past the event time)
+    if (diffInHours < -2) {
+      return 'ended';
+    }
+    
+    // If event is in the future
+    return 'upcoming';
+  };
+
   // Fetch events and businesses
   useEffect(() => {
     fetchEvents();
@@ -45,9 +75,21 @@ export default function Events() {
     }
   }, [user]);
 
-  const handleToggleInterest = async (eventId: string) => {
+  const handleToggleInterest = async (eventId: string, eventDate: Date) => {
     if (!user?.id) {  
       toast.error('Please sign in to mark interest in events');
+      return;
+    }
+
+    const eventStatus = getEventStatus(eventDate);
+    
+    if (eventStatus === 'ongoing') {
+      toast.error('Sorry, the event is ongoing now.');
+      return;
+    }
+    
+    if (eventStatus === 'ended') {
+      toast.error("Sorry, you're late. This event has ended.");
       return;
     }
 
@@ -118,97 +160,119 @@ export default function Events() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <h1 className="text-2xl font-semibold mb-6">Upcoming Events</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-20">
-          {events.map((event) => {
-            const business = businesses.find(b => b.id === event.businessId);
-            const isProcessing = processingEvents.has(event.id);
+          {events
+            .filter(event => getEventStatus(event.date) !== 'hidden') // Filter out old events
+            .map((event) => {
+              const business = businesses.find(b => b.id === event.businessId);
+              const isProcessing = processingEvents.has(event.id);
+              const eventStatus = getEventStatus(event.date);
 
-            return (
-              <div
-                key={event.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-auto"
-              >
-                {/* Event Image */}
-                <div className="w-full h-36 bg-gradient-to-r from-blue-500 to-purple-500 relative">
-                  {business?.photos?.[0] ? (
-                    <img 
-                      src={business.photos[0]} 
-                      alt={event.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <CalendarIcon className="h-12 w-12 text-white opacity-50" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                      {event.category}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content Container */}
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold">{event.title}</h2>
-                    
-                    {/* Business Info */}
-                    {business && (
-                      <div className="flex items-center text-sm text-gray-600 mt-1">
-                        <BuildingStorefrontIcon className="h-4 w-4 mr-1" />
-                        <span>{business.name}</span>
+              return (
+                <div
+                  key={event.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-auto"
+                >
+                  {/* Event Image */}
+                  <div className="w-full h-36 bg-gradient-to-r from-blue-500 to-purple-500 relative">
+                    {business?.photos?.[0] ? (
+                      <img 
+                        src={business.photos[0]} 
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CalendarIcon className="h-12 w-12 text-white opacity-50" />
                       </div>
                     )}
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                        {event.category}
+                      </span>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        eventStatus === 'ongoing' 
+                          ? 'bg-green-100 text-green-800'
+                          : eventStatus === 'ended'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {eventStatus === 'ongoing' 
+                          ? 'Ongoing' 
+                          : eventStatus === 'ended'
+                            ? 'Ended'
+                            : 'Upcoming'}
+                      </span>
+                    </div>
+                  </div>
 
-                    {/* Event Info */}
-                    <div className="mt-2 space-y-1">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <CalendarIcon className="h-4 w-4 mr-1" />
-                        {format(new Date(event.date), 'PPp')}
+                  {/* Content Container */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold">{event.title}</h2>
+                      
+                      {/* Business Info */}
+                      {business && (
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <BuildingStorefrontIcon className="h-4 w-4 mr-1" />
+                          <span>{business.name}</span>
+                        </div>
+                      )}
+
+                      {/* Event Info */}
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <CalendarIcon className="h-4 w-4 mr-1" />
+                          {format(new Date(event.date), 'PPp')}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPinIcon className="h-4 w-4 mr-1" />
+                          {event.location}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <UserGroupIcon className="h-4 w-4 mr-1" />
+                          {event.attendees} interested
+                        </div>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPinIcon className="h-4 w-4 mr-1" />
-                        {event.location}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <UserGroupIcon className="h-4 w-4 mr-1" />
-                        {event.attendees} interested
-                      </div>
+
+                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                        {event.description}
+                      </p>
                     </div>
 
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                      {event.description}
-                    </p>
-                  </div>
-
-                  {/* Button Container */}
-                  <div className="mt-4 pt-2">
-                    <button
-                      onClick={() => handleToggleInterest(event.id)}
-                      disabled={isProcessing || !user}
-                      className={`w-full px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center ${
-                        !user 
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : isProcessing 
-                            ? 'opacity-75 cursor-not-allowed' 
-                            : userInterestedEvents.has(event.id)
-                              ? 'bg-green-600 hover:bg-green-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}
-                    >
-                      {isProcessing ? (
-                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      ) : userInterestedEvents.has(event.id) ? (
-                        'Interested ✓'
-                      ) : (
-                        'Interested'
-                      )}
-                    </button>
+                    {/* Button Container */}
+                    <div className="mt-4 pt-2">
+                      <button
+                        onClick={() => handleToggleInterest(event.id, event.date)}
+                        disabled={isProcessing || !user || eventStatus === 'ongoing' || eventStatus === 'ended'}
+                        className={`w-full px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center ${
+                          !user 
+                            ? 'bg-gray-300 cursor-not-allowed'
+                            : eventStatus === 'ongoing' || eventStatus === 'ended'
+                              ? 'bg-gray-300 cursor-not-allowed'
+                              : isProcessing 
+                                ? 'opacity-75 cursor-not-allowed' 
+                                : userInterestedEvents.has(event.id)
+                                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        {isProcessing ? (
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : eventStatus === 'ongoing' ? (
+                          'Event is Ongoing'
+                        ) : eventStatus === 'ended' ? (
+                          'Event has Ended'
+                        ) : userInterestedEvents.has(event.id) ? (
+                          'Interested'
+                        ) : (
+                          'Mark as Interested'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-    import React from 'react';
+    import React, { useEffect } from 'react';
     import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
     import L from 'leaflet';
 
@@ -28,14 +28,18 @@
     }
 
     export default function CoordinatePicker({ value, onChange }: CoordinatePickerProps) {
+    useEffect(() => {
+        // Force map to update its size after mounting
+        const timer = setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
-        <div className="mt-2">
-        <div className="mb-2">
-            <p className="text-sm text-gray-500">
-            Click on the map to set the location or enter coordinates manually
-            </p>
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-2">
+        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-4">
             <div>
             <label className="block text-sm font-medium text-gray-700">Latitude</label>
             <input
@@ -57,11 +61,18 @@
             />
             </div>
         </div>
-        <div className="h-[300px] rounded-lg overflow-hidden border border-gray-300">
+        <div className="h-[300px] rounded-lg overflow-hidden border border-gray-300 relative">
             <MapContainer
             center={[value.lat, value.lng]}
             zoom={15}
             className="h-full w-full"
+            style={{ zIndex: 1 }}
+            whenReady={(map) => {
+                // Invalidate size when map is ready
+                setTimeout(() => {
+                map.target.invalidateSize();
+                }, 0);
+            }}
             >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
