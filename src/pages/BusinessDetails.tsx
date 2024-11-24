@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { useBusinessStore } from '../stores/businessStore';
 import { useDiscountStore } from '../stores/discountStore';
+import { useReviewStore } from '../stores/reviewStore';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
+import ReviewForm from '../components/ReviewForm';
+import ReviewList from '../components/ReviewList';
+import type { Business } from '../types';
 
-// Add this constant
 const DAYS_OF_WEEK = [
   'monday',
   'tuesday', 
@@ -27,30 +30,51 @@ const formatTime = (time: string) => {
 
 export default function BusinessDetails() {
   const { id } = useParams();
-  const { businesses, loading: businessLoading, fetchBusinesses } = useBusinessStore();
+  const { fetchBusiness } = useBusinessStore();
   const { discounts, loading: discountLoading, fetchDiscounts } = useDiscountStore();
+  const { loading: reviewLoading, error: reviewError, fetchReviews, clearError } = useReviewStore();
   const { user } = useAuth();
-  
-  // Add loading state tracking
-  const loading = businessLoading || discountLoading;
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
+      if (!id) {
+        setError('Business ID is missing');
+        setLoading(false);
+        return;
+      }
+      
       try {
         console.log('Loading business details for ID:', id);
+        setLoading(true);
+        setError(null);
+        clearError(); // Clear any previous review errors
+
+        const businessData = await fetchBusiness(id);
+        if (!businessData) {
+          setError('Business not found');
+          return;
+        }
+
+        setBusiness(businessData);
+        
+        // Fetch discounts and reviews in parallel
         await Promise.all([
-          fetchBusinesses(),
-          fetchDiscounts()
+          fetchDiscounts(),
+          fetchReviews(id)
         ]);
       } catch (error) {
         console.error('Error loading business details:', error);
+        setError('Failed to load business details');
+      } finally {
+        setLoading(false);
       }
     };
     loadData();
-  }, [id, fetchBusinesses, fetchDiscounts]);
-
-  const business = businesses.find(b => b.id === id);
-  console.log('Found business:', business);
+  }, [id, fetchBusiness, fetchDiscounts, fetchReviews, clearError]);
 
   const activeDiscounts = discounts.filter(
     discount => 
@@ -59,10 +83,9 @@ export default function BusinessDetails() {
       new Date(discount.expiryDate) > new Date()
   );
 
-  // Show loading state
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <span className="ml-3 text-gray-600">Loading business details...</span>
@@ -71,141 +94,167 @@ export default function BusinessDetails() {
     );
   }
 
-  // Show error state if business not found
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900">Error</h2>
+          <p className="mt-2 text-gray-600">{error}</p>
+          <Link to="/" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!business) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-gray-900">Business not found</h2>
           <p className="mt-2 text-gray-600">The business you're looking for doesn't exist or has been removed.</p>
+          <Link to="/" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+            Return to Home
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-20">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 pb-20">
       <div className="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-        {business?.photos && business.photos.length > 0 && (
-          <img
-            src={business.photos[0]}
-            alt={business.name}
-            className="w-full h-48 object-cover"
-          />
+        {business.photos && business.photos.length > 0 && (
+          <div className="relative w-full h-48 sm:h-64 lg:h-72">
+            <img
+              src={business.photos[0]}
+              alt={business.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          </div>
         )}
-        
-        <div className="px-4 py-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">{business?.name}</h1>
-              <p className="mt-1 text-sm text-gray-600">{business?.category}</p>
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{business.name}</h1>
+              <p className="text-sm sm:text-base text-gray-600">{business.description}</p>
             </div>
-            <div className="flex items-center">
-              <div className="flex text-yellow-400">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon
-                    key={i}
-                    className={`h-6 w-6 ${
-                      i < business.rating ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
-                  />
+            <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+              <div className="flex items-center">
+                <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {business.rating.toFixed(1)}
+                </span>
+                <StarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 ml-1" />
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500">{business.reviewCount} reviews</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Contact Information</h2>
+              <div className="space-y-3 text-sm sm:text-base">
+                <div className="flex items-start space-x-2">
+                  <span className="font-medium min-w-[4.5rem]">Address:</span>
+                  <span className="text-gray-600 flex-1">{business.address}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium min-w-[4.5rem]">Phone:</span>
+                  <a href={`tel:${business.phone}`} className="text-blue-600 hover:text-blue-800 flex-1">
+                    {business.phone}
+                  </a>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium min-w-[4.5rem]">Email:</span>
+                  <a href={`mailto:${business.email}`} className="text-blue-600 hover:text-blue-800 flex-1 break-all">
+                    {business.email}
+                  </a>
+                </div>
+                {business.website && (
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium min-w-[4.5rem]">Website:</span>
+                    <a
+                      href={business.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 flex-1 break-all"
+                    >
+                      {business.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Business Hours</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 text-sm sm:text-base">
+                {DAYS_OF_WEEK.map((day) => (
+                  <div key={day} className="flex justify-between items-center py-1 border-b border-gray-100">
+                    <span className="capitalize font-medium">{day}</span>
+                    <span className="text-gray-600">
+                      {formatTime(business.hours[day].open)} - {formatTime(business.hours[day].close)}
+                    </span>
+                  </div>
                 ))}
               </div>
-              <span className="ml-2 text-gray-600">({business.reviewCount} reviews)</span>
             </div>
           </div>
 
-          {/* Contact and Hours sections */}
-          <div className="mt-4 space-y-3">
-            <div>
-              <h3 className="text-base font-medium text-gray-900">Contact Information</h3>
-              <div className="mt-1 space-y-1">
-                {business?.phone && (
-                  <p className="text-sm text-gray-600">Phone: {business.phone}</p>
-                )}
-                {business?.email && (
-                  <p className="text-sm text-gray-600">Email: {business.email}</p>
-                )}
-                {business?.website && (
-                  <p className="text-sm text-gray-600">
-                    Website: <a href={business.website} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">{business.website}</a>
-                  </p>
-                )}
-                {business?.address && (
-                  <p className="text-sm text-gray-600">Address: {business.address}</p>
-                )}
+          {activeDiscounts.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Active Discounts</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeDiscounts.map((discount) => (
+                  <div
+                    key={discount.id}
+                    className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100"
+                  >
+                    <div className="text-lg font-semibold text-blue-900">{discount.title}</div>
+                    <p className="text-sm text-gray-600 mt-1">{discount.description}</p>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Expires: {format(new Date(discount.expiryDate), 'MMM d, yyyy')}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Business Hours */}
-            {business?.hours && (
-              <div>
-                <h3 className="text-base font-medium text-gray-900">Business Hours</h3>
-                <div className="mt-1 space-y-1">
-                  {DAYS_OF_WEEK.map((day) => {
-                    const hours = business.hours[day];
-                    return (
-                      <div key={day} className="flex justify-between text-sm">
-                        <span className="capitalize text-gray-600 w-24">{day}</span>
-                        <span className="text-gray-900">
-                          {hours.isClosed ? (
-                            'Closed'
-                          ) : (
-                            `${formatTime(hours.open)} - ${formatTime(hours.close)}`
-                          )}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Active Discounts Section - Updated Layout */}
-      {activeDiscounts.length > 0 && (
-        <div className="mt-6 mb-20">
-          <h2 className="text-lg font-semibold mb-4">Current Discounts</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {activeDiscounts.map(discount => (
-              <div 
-                key={discount.id} 
-                className="bg-blue-50 rounded-lg p-4 hover:shadow-md transition-shadow"
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900">Reviews</h2>
+            {user && !showReviewForm && (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-blue-900">{discount.title}</h3>
-                    <p className="text-sm text-blue-700 mt-1">{discount.description}</p>
-                  </div>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 ml-2">
-                    {discount.discountValue}% OFF
-                  </span>
-                </div>
-                {user ? (
-                  <div className="mt-3">
-                    <p className="text-xs text-blue-700">
-                      Valid until {format(new Date(discount.expiryDate), 'PP')}
-                    </p>
-                    {discount.terms && (
-                      <p className="text-xs text-blue-700 mt-2">
-                        Terms: {discount.terms}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-blue-700">
-                    <Link to="/login" className="font-medium hover:text-blue-900">
-                      Sign in
-                    </Link> to view full discount details
-                  </p>
-                )}
-              </div>
-            ))}
+                Write a Review
+              </button>
+            )}
           </div>
+
+          {showReviewForm && (
+            <div className="mb-6">
+              <ReviewForm
+                businessId={id!}
+                onSuccess={() => {
+                  setShowReviewForm(false);
+                  fetchReviews(id!);
+                }}
+                onCancel={() => setShowReviewForm(false)}
+              />
+            </div>
+          )}
+
+          <ReviewList businessId={id!} />
         </div>
-      )}
+      </div>
     </div>
   );
 }

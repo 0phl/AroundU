@@ -11,14 +11,16 @@ import {
   query,
   orderBy,
   Timestamp,
-  getFirestore 
+  getDoc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 interface BusinessStore {
   businesses: Business[];
   loading: boolean;
+  error: string | null;
   fetchBusinesses: () => Promise<void>;
+  fetchBusiness: (id: string) => Promise<Business | null>;
   addBusiness: (business: Omit<Business, 'id'>) => Promise<void>;
   updateBusiness: (id: string, business: Partial<Business>) => Promise<void>;
   deleteBusiness: (id: string) => Promise<void>;
@@ -57,9 +59,10 @@ interface FirestoreBusiness {
 export const useBusinessStore = create<BusinessStore>((set, get) => ({
   businesses: [],
   loading: false,
+  error: null,
 
   fetchBusinesses: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       console.log('Fetching businesses...');
       const businessesRef = collection(db, 'businesses');
@@ -68,7 +71,6 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
       
       const businesses = querySnapshot.docs.map(doc => {
         const data = doc.data() as FirestoreBusiness;
-        console.log('Business data:', doc.id, data);
         return {
           id: doc.id,
           ...data,
@@ -79,11 +81,40 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
         } as Business;
       });
 
-      console.log('Processed businesses:', businesses);
+      console.log('Fetched businesses:', businesses.length);
       set({ businesses, loading: false });
     } catch (error) {
       console.error('Error fetching businesses:', error);
-      set({ loading: false });
+      set({ loading: false, error: 'Failed to fetch businesses' });
+      throw error;
+    }
+  },
+
+  fetchBusiness: async (id: string) => {
+    try {
+      console.log('Fetching single business:', id);
+      const businessRef = doc(db, 'businesses', id);
+      const businessDoc = await getDoc(businessRef);
+      
+      if (!businessDoc.exists()) {
+        console.log('Business not found:', id);
+        return null;
+      }
+
+      const data = businessDoc.data() as FirestoreBusiness;
+      const business = {
+        id: businessDoc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        searchTerms: data.searchTerms || [],
+        discounts: data.discounts || []
+      } as Business;
+
+      console.log('Fetched single business:', business);
+      return business;
+    } catch (error) {
+      console.error('Error fetching single business:', error);
       throw error;
     }
   },
@@ -103,11 +134,10 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
 
       const docRef = await addDoc(businessesRef, newBusiness);
       const business = {
-        ...newBusiness,
         id: docRef.id,
+        ...newBusiness,
         createdAt: newBusiness.createdAt.toDate(),
-        updatedAt: newBusiness.updatedAt.toDate(),
-        searchTerms: [],
+        updatedAt: newBusiness.updatedAt.toDate()
       } as Business;
 
       set(state => ({
@@ -124,14 +154,14 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
       const businessRef = doc(db, 'businesses', id);
       const updateData = {
         ...updatedData,
-        updatedAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       };
-      
+
       await updateDoc(businessRef, updateData);
 
       set(state => ({
-        businesses: state.businesses.map(business =>
-          business.id === id
+        businesses: state.businesses.map(business => 
+          business.id === id 
             ? { ...business, ...updatedData, updatedAt: new Date() }
             : business
         )
@@ -147,11 +177,6 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
       const businessRef = doc(db, 'businesses', id);
       await deleteDoc(businessRef);
 
-      // Also delete associated discounts
-      const discountStore = useDiscountStore.getState();
-      const discountsToDelete = discountStore.discounts.filter(d => d.businessId === id);
-      discountsToDelete.forEach(d => discountStore.deleteDiscount(d.id));
-
       set(state => ({
         businesses: state.businesses.filter(business => business.id !== id)
       }));
@@ -159,5 +184,5 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
       console.error('Error deleting business:', error);
       throw error;
     }
-  },
+  }
 }));

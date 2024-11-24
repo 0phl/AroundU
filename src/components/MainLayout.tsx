@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { useAuth } from '../hooks/useAuth';
 import NavigationButtons from './NavigationButtons';
 import { Bars3Icon, XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import logo from '../assets/logo.svg';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,24 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profilePicture, setProfilePicture] = useState('');
+
+  // Fetch user's profile picture
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      if (!user?.id) return;
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.id));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setProfilePicture(userData.profilePicture || '');
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error);
+      }
+    };
+    fetchProfilePicture();
+  }, [user?.id]);
 
   const handleSignOut = async () => {
     try {
@@ -75,10 +95,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 {user ? (
                   <Menu as="div" className="relative ml-3">
                     <Menu.Button className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                        <span className="text-sm font-medium text-white">
-                          {user.email?.[0].toUpperCase()}
-                        </span>
+                      <div className="h-8 w-8 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center">
+                        {profilePicture ? (
+                          <img
+                            src={profilePicture}
+                            alt="Profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-white">
+                            {user.firstName?.[0].toUpperCase() || user.email?.[0].toUpperCase()}
+                          </span>
+                        )}
                       </div>
                     </Menu.Button>
 
@@ -99,7 +127,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 active ? 'bg-gray-100' : ''
                               } block px-4 py-2 text-sm text-gray-700`}
                             >
-                              Profile
+                              Your Profile
                             </Link>
                           )}
                         </Menu.Item>
@@ -125,7 +153,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 active ? 'bg-gray-100' : ''
                               } block w-full text-left px-4 py-2 text-sm text-gray-700`}
                             >
-                              Sign Out
+                              Sign out
                             </button>
                           )}
                         </Menu.Item>
@@ -135,9 +163,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 ) : (
                   <Link
                     to="/login"
-                    className="text-sm font-medium text-blue-100 hover:text-white"
+                    className="text-blue-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                   >
-                    Sign In
+                    Sign in
                   </Link>
                 )}
               </div>
@@ -145,86 +173,71 @@ export default function MainLayout({ children }: MainLayoutProps) {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-blue-100 hover:text-white hover:bg-blue-700 focus:outline-none"
+                className="sm:hidden p-2 rounded-md hover:bg-blue-500 focus:outline-none"
               >
                 {isMobileMenuOpen ? (
-                  <XMarkIcon className="block h-6 w-6" />
+                  <XMarkIcon className="h-6 w-6" />
                 ) : (
-                  <Bars3Icon className="block h-6 w-6" />
+                  <Bars3Icon className="h-6 w-6" />
                 )}
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden pb-3`}>
-            {/* Navigation Links */}
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  location.pathname === link.to
-                    ? 'text-white bg-blue-700'
-                    : 'text-blue-100 hover:text-white hover:bg-blue-700'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {/* User Menu Items for Mobile */}
-            <div className="pt-4 mt-2 border-t border-blue-700">
-              {user ? (
+        {/* Mobile menu */}
+        <Transition
+          show={isMobileMenuOpen}
+          enter="transition ease-out duration-100 transform"
+          enterFrom="opacity-0 scale-95"
+          enterTo="opacity-100 scale-100"
+          leave="transition ease-in duration-75 transform"
+          leaveFrom="opacity-100 scale-100"
+          leaveTo="opacity-0 scale-95"
+        >
+          <div className="sm:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    location.pathname === link.to
+                      ? 'text-white bg-blue-500'
+                      : 'text-blue-100 hover:text-white hover:bg-blue-500'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {user && (
                 <>
                   <Link
                     to="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-500"
                   >
-                    Profile
+                    Your Profile
                   </Link>
-                  {user.role === 'admin' && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700"
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
                   <button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700"
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-500"
                   >
-                    Sign Out
+                    Sign out
                   </button>
                 </>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700"
-                >
-                  Sign In
-                </Link>
               )}
             </div>
           </div>
-        </div>
+        </Transition>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1">
-        {children}
+      <main className="flex-grow bg-gray-50">
+        <div className="w-full">{children}</div>
       </main>
 
       {/* Bottom Navigation */}
       <NavigationButtons />
     </div>
   );
-} 
+}

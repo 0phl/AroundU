@@ -11,12 +11,41 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
     function isUpdatingReadByOnly() {
       let diff = request.resource.data.diff(resource.data);
       return diff.affectedKeys().hasOnly(['readBy', 'updatedAt']) &&
              diff.changedKeys().hasOnly(['readBy', 'updatedAt']);
     }
     
+    // Reviews collection rules
+    match /reviews/{reviewId} {
+      allow read: if true;  // Anyone can read reviews
+      allow create: if isAuthenticated() &&
+                   request.resource.data.userId == request.auth.uid &&
+                   request.resource.data.businessId is string &&
+                   request.resource.data.userName is string &&
+                   request.resource.data.rating >= 1 &&
+                   request.resource.data.rating <= 5 &&
+                   request.resource.data.text is string &&
+                   request.resource.data.text.size() > 0 &&
+                   request.resource.data.createdAt is timestamp &&
+                   request.resource.data.updatedAt is timestamp;
+      allow update: if isAuthenticated() &&
+                   (isOwner(resource.data.userId) || isAdmin()) &&
+                   request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'text', 'updatedAt']) &&
+                   request.resource.data.rating >= 1 &&
+                   request.resource.data.rating <= 5 &&
+                   request.resource.data.text is string &&
+                   request.resource.data.text.size() > 0 &&
+                   request.resource.data.updatedAt is timestamp;
+      allow delete: if isAuthenticated() &&
+                   (isOwner(resource.data.userId) || isAdmin());
+    }
+
     // Events collection rules
     match /events/{eventId} {
       allow read: if true;  // Anyone can read events
@@ -28,9 +57,10 @@ service cloud.firestore {
 
     // Users collection rules
     match /users/{userId} {
-      allow read: if request.auth != null && 
-                 (request.auth.uid == userId || isAdmin());
+      // Allow reading public profile information
+      allow read: if true;  // Anyone can read basic user info
       
+      // For sensitive operations, require authentication
       allow update: if request.auth != null && 
                    (
                      (request.auth.uid == userId && 
@@ -42,7 +72,11 @@ service cloud.firestore {
       
       allow create: if request.auth != null && 
                    request.auth.uid == userId && 
-                   request.resource.data.role == 'user';
+                   request.resource.data.role == 'user' &&
+                   request.resource.data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+                   request.resource.data.email is string &&
+                   request.resource.data.displayName is string &&
+                   request.resource.data.createdAt is timestamp;
 
       // Rules for interestedEvents subcollection
       match /interestedEvents/{eventId} {
@@ -53,14 +87,18 @@ service cloud.firestore {
 
     // Businesses collection rules
     match /businesses/{businessId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read: if true;  // Anyone can read businesses
+      allow create: if isAdmin();
+      allow update: if isAdmin() || 
+        (isAuthenticated() && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviewCount', 'updatedAt']));
+      allow delete: if isAdmin();
     }
 
     // Discounts collection rules
     match /discounts/{discountId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read: if true;  // Anyone can read discounts
+      allow create, update, delete: if isAdmin();
     }
 
     // Alerts collection rules

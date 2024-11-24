@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  photoURL?: string;
   role: 'user' | 'admin';
   studentId?: string;
   createdAt: Date;
@@ -41,10 +42,12 @@ export interface Review {
   id: string;
   businessId: string;
   userId: string;
+  userName: string;
+  userPhotoURL?: string;
   rating: number;
-  comment: string;
-  photos?: string[];
+  text: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Discount {

@@ -33,6 +33,12 @@ export interface Business {
     sunday: { open: string; close: string; isClosed?: boolean };
   };
   searchTerms: string[];
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  createdAt: Date;
+  updatedAt: Date;
   // Add other business fields as needed
 }
 
@@ -46,6 +52,17 @@ export interface Discount {
   status: 'active' | 'inactive' | 'expired';
   expiryDate: Date | string;
   terms?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Review {
+  id: string;
+  businessId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  text: string;
   createdAt: Date;
   updatedAt: Date;
 }
