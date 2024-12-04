@@ -210,7 +210,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   {link.label}
                 </Link>
               ))}
-              {user && (
+              {user ? (
                 <>
                   <Link
                     to="/profile"
@@ -225,6 +225,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     Sign out
                   </button>
                 </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-500"
+                >
+                  Sign in
+                </Link>
               )}
             </div>
           </div>
